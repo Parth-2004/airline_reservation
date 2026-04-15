@@ -1,4 +1,4 @@
-# AirBook -- Airline Seat Reservation System
+# AirBook - Airline Seat Reservation System
 
 **Live Demo:** [https://Parth2004.pythonanywhere.com](https://Parth2004.pythonanywhere.com)
 
