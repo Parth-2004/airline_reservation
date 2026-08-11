@@ -98,40 +98,40 @@ def api_login():
 # ─── Admin: Users ─────────────────────────────────────────────────────────────
 
 @app.route("/api/admin/users", methods=["GET"])
+@require_admin
 def api_users():
     return ok(get_all_users())
 
 @app.route("/api/admin/stats", methods=["GET"])
+@require_admin
 def api_admin_stats():
     return ok(get_dashboard_stats())
 
 @app.route("/api/admin/revenue", methods=["GET"])
+@require_admin
 def api_revenue():
-    # Only admin role can access revenue data
-    role = request.headers.get("X-Role", "user")
-    if role != "admin":
-        return err("Revenue data is restricted to administrators.", 403)
     return ok(get_revenue_report())
 
 @app.route("/api/admin/occupancy", methods=["GET"])
+@require_admin
 def api_occupancy():
     return ok(get_occupancy_report())
 
 @app.route("/api/admin/bookings", methods=["GET"])
+@require_admin
 def api_all_bookings():
     return ok(get_bookings())
 
 @app.route("/api/admin/aircraft-models", methods=["GET"])
+@require_admin
 def api_aircraft_models():
     return ok(list(AIRCRAFT_LAYOUTS.keys()))
 
 # ─── Admin: Flight Management ──────────────────────────────────────────────────
 
 @app.route("/api/admin/flights", methods=["POST"])
+@require_admin
 def api_add_flight():
-    role = request.headers.get("X-Role", "user")
-    if role != "admin":
-        return err("Admin access required.", 403)
     d = request.json or {}
     try:
         result = add_flight(
@@ -149,10 +149,8 @@ def api_add_flight():
         return err(e)
 
 @app.route("/api/admin/flights/<fid>", methods=["DELETE"])
+@require_admin
 def api_delete_flight(fid):
-    role = request.headers.get("X-Role", "user")
-    if role != "admin":
-        return err("Admin access required.", 403)
     try:
         delete_flight(fid)
         return ok({"deleted": fid})
@@ -162,10 +160,12 @@ def api_delete_flight(fid):
 # ─── Passengers ───────────────────────────────────────────────────────────────
 
 @app.route("/api/passengers", methods=["GET"])
+@require_admin
 def api_passengers():
     return ok(get_all_passengers())
 
 @app.route("/api/passengers/<pid>/tier", methods=["PUT"])
+@require_admin
 def api_update_tier(pid):
     d = request.json or {}
     update_passenger_tier(pid, d.get("tier","Regular"))
