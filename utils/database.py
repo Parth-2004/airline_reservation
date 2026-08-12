@@ -511,6 +511,8 @@ def upgrade_booking(booking_id: str, new_seat_id: str) -> dict:
         ).fetchone()
         if not new_seat:
             raise ValueError("Upgrade seat not available.")
+        if new_seat["flight_id"] != b["flight_id"]:
+            raise ValueError("Upgrade seat must be on the same flight.")
 
         old_label = b["seat_label"]
         old_seat_id = b["seat_id"]
