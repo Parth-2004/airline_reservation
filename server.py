@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from flask import Flask, request, jsonify, send_from_directory, session
 from utils.database import (
-    init_db,
+    init_db, get_conn,
     register_user, login_user, get_all_users,
     get_all_passengers, update_passenger_tier,
     get_all_flights, get_flight, get_seats, get_seat_map, get_flight_stats,
@@ -46,18 +46,26 @@ def err(msg, code=400):
 def require_login(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        uid = request.headers.get("X-User-Id") or request.json and request.json.get("_uid")
+        uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
         if not uid:
             return err("Not authenticated.", 401)
+        with get_conn() as conn:
+            row = conn.execute("SELECT id FROM users WHERE id=?", (uid,)).fetchone()
+            if not row:
+                return err("Invalid session or user not found.", 401)
         return f(*args, **kwargs)
     return wrapper
 
 def require_admin(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        role = request.headers.get("X-Role", "user")
-        if role != "admin":
-            return err("Admin access required.", 403)
+        uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+        if not uid:
+            return err("Not authenticated.", 401)
+        with get_conn() as conn:
+            row = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+            if not row or row["role"] != "admin":
+                return err("Admin access required.", 403)
         return f(*args, **kwargs)
     return wrapper
 
