@@ -211,6 +211,7 @@ def api_seats(fid):
 # ─── Bookings ─────────────────────────────────────────────────────────────────
 
 @app.route("/api/bookings", methods=["GET"])
+@require_login
 def api_bookings():
     pax_id   = request.args.get("passenger_id")
     fid      = request.args.get("flight_id")
@@ -218,6 +219,7 @@ def api_bookings():
     return ok(get_bookings(pax_id, fid, status))
 
 @app.route("/api/bookings", methods=["POST"])
+@require_login
 def api_book():
     d = request.json or {}
     try:
@@ -238,6 +240,7 @@ def api_book():
         return err(e)
 
 @app.route("/api/bookings/<bid>/cancel", methods=["POST"])
+@require_login
 def api_cancel(bid):
     try:
         result = cancel_booking(bid)
@@ -246,6 +249,7 @@ def api_cancel(bid):
         return err(e)
 
 @app.route("/api/bookings/<bid>/upgrade", methods=["POST"])
+@require_login
 def api_upgrade(bid):
     d = request.json or {}
     try:
@@ -257,11 +261,13 @@ def api_upgrade(bid):
 # ─── Waitlist ─────────────────────────────────────────────────────────────────
 
 @app.route("/api/waitlist", methods=["GET"])
+@require_login
 def api_waitlist():
     fid = request.args.get("flight_id")
     return ok(get_waitlist(fid))
 
 @app.route("/api/waitlist", methods=["POST"])
+@require_login
 def api_join_waitlist():
     d = request.json or {}
     try:
@@ -271,6 +277,7 @@ def api_join_waitlist():
         return err(e)
 
 @app.route("/api/waitlist/<wid>", methods=["DELETE"])
+@require_login
 def api_remove_waitlist(wid):
     remove_from_waitlist(wid)
     return ok({"removed": wid})
