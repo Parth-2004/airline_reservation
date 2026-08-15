@@ -32,3 +32,4 @@ desktop.ini
 data/
 *.json
 !package.json
+*.log
