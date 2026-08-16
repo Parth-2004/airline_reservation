@@ -223,6 +223,9 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
 def delete_flight(flight_id: str):
     """Admin: remove a flight (cascades to seats, waitlist)."""
     with get_conn() as conn:
+        flight = conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone()
+        if not flight:
+            raise ValueError("Flight not found.")
         if conn.execute(
             "SELECT COUNT(*) FROM bookings WHERE flight_id=? AND status!='Cancelled'",
             (flight_id,)
@@ -538,6 +541,10 @@ TIER_PRIORITY = {"Regular": 0, "Gold": 1, "Platinum": 2}
 
 def join_waitlist(passenger_id: str, flight_id: str, pref_class: str = "Economy"):
     with get_conn() as conn:
+        flight = conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone()
+        if not flight:
+            raise ValueError("Flight not found.")
+
         # Check not already in waitlist
         if conn.execute(
             "SELECT id FROM waitlist WHERE flight_id=? AND passenger_id=?",
@@ -552,7 +559,9 @@ def join_waitlist(passenger_id: str, flight_id: str, pref_class: str = "Economy"
             raise ValueError("Passenger already has an active booking on this flight.")
 
         pax = conn.execute("SELECT tier FROM passengers WHERE id=?", (passenger_id,)).fetchone()
-        priority = TIER_PRIORITY.get(pax["tier"] if pax else "Regular", 0)
+        if not pax:
+            raise ValueError("Passenger not found.")
+        priority = TIER_PRIORITY.get(pax["tier"], 0)
         conn.execute(
             "INSERT INTO waitlist (id,flight_id,passenger_id,pref_class,priority,added_at)"
             " VALUES (?,?,?,?,?,?)",
