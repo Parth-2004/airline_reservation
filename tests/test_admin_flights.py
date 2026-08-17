@@ -25,6 +25,9 @@ def test_admin_flights(client):
     assert res.status_code == 200
 
 def test_admin_update_tier(client):
+    # Register a user to ensure there's at least one passenger
+    client.post("/api/auth/register", json={"username": "testuser", "email": "test@test.com", "password": "password"})
+
     res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
     admin_id = res.get_json()["data"]["id"]
 

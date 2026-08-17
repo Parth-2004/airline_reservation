@@ -8,6 +8,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from contextlib import contextmanager
+from werkzeug.security import generate_password_hash, check_password_hash
 
 DB_PATH = os.environ.get(
     "DATABASE_PATH",
@@ -32,7 +33,7 @@ def get_conn():
 
 
 def hash_password(pw: str) -> str:
-    return hashlib.sha256(pw.encode()).hexdigest()
+    return generate_password_hash(pw)
 
 
 # ─── Schema ──────────────────────────────────────────────────────────────────
@@ -260,11 +261,25 @@ def register_user(username: str, email: str, password: str, role: str = "user") 
 def login_user(username: str, password: str) -> dict:
     with get_conn() as conn:
         row = conn.execute(
-            "SELECT * FROM users WHERE (username=? OR email=?) AND password=?",
-            (username, username, hash_password(password))
+            "SELECT * FROM users WHERE (username=? OR email=?)",
+            (username, username)
         ).fetchone()
         if not row:
             raise ValueError("Invalid credentials.")
+
+        stored_password = row["password"]
+
+        # Check if the stored password is a legacy SHA-256 hash (64 hex characters)
+        if len(stored_password) == 64 and all(c in '0123456789abcdefABCDEF' for c in stored_password):
+            if hashlib.sha256(password.encode()).hexdigest() != stored_password:
+                raise ValueError("Invalid credentials.")
+
+            # Upgrade the hash to scrypt
+            new_hash = generate_password_hash(password)
+            conn.execute("UPDATE users SET password=? WHERE id=?", (new_hash, row["id"]))
+        elif not check_password_hash(stored_password, password):
+            raise ValueError("Invalid credentials.")
+
         # Get passenger profile
         pax = conn.execute(
             "SELECT id, tier FROM passengers WHERE user_id=?", (row["id"],)
