@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from flask import Flask, request, jsonify, send_from_directory, session
 from utils.database import (
     init_db, get_conn,
-    register_user, login_user, get_all_users,
+    register_user, login_user, get_all_users, get_passenger_by_user,
     get_all_passengers, update_passenger_tier,
     get_all_flights, get_flight, get_seats, get_seat_map, get_flight_stats,
     add_flight, delete_flight, AIRCRAFT_LAYOUTS,
@@ -213,9 +213,22 @@ def api_seats(fid):
 @app.route("/api/bookings", methods=["GET"])
 @require_login
 def api_bookings():
+    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    pax = get_passenger_by_user(uid)
+
     pax_id   = request.args.get("passenger_id")
     fid      = request.args.get("flight_id")
     status   = request.args.get("status")
+
+    if not pax:
+        return err("Passenger profile not found.", 403)
+
+    if pax_id and pax_id != pax["id"]:
+        return err("Not authorized to view bookings for this passenger.", 403)
+
+    # Force the query to only return the logged in user's bookings
+    pax_id = pax["id"]
+
     return ok(get_bookings(pax_id, fid, status))
 
 @app.route("/api/bookings", methods=["POST"])
@@ -223,10 +236,16 @@ def api_bookings():
 def api_book():
     d = request.json or {}
     try:
+        uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+        pax = get_passenger_by_user(uid)
+
         seat_ids = d.get("seat_ids")          # multi-seat: list
         seat_id  = d.get("seat_id")           # single seat: string (legacy)
         pid      = d["passenger_id"]
         fid      = d["flight_id"]
+
+        if not pax or pax["id"] != pid:
+            return err("Not authorized to book for this passenger.", 403)
 
         if seat_ids and isinstance(seat_ids, list):
             result = book_multiple_seats(pid, fid, seat_ids)
@@ -242,6 +261,16 @@ def api_book():
 @app.route("/api/bookings/<bid>/cancel", methods=["POST"])
 @require_login
 def api_cancel(bid):
+    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    pax = get_passenger_by_user(uid)
+    if not pax:
+        return err("Passenger profile not found.", 403)
+
+    with get_conn() as conn:
+        b = conn.execute("SELECT passenger_id FROM bookings WHERE id=?", (bid,)).fetchone()
+        if not b or b["passenger_id"] != pax["id"]:
+            return err("Not authorized to cancel this booking.", 403)
+
     try:
         result = cancel_booking(bid)
         return ok(result)
@@ -251,6 +280,16 @@ def api_cancel(bid):
 @app.route("/api/bookings/<bid>/upgrade", methods=["POST"])
 @require_login
 def api_upgrade(bid):
+    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    pax = get_passenger_by_user(uid)
+    if not pax:
+        return err("Passenger profile not found.", 403)
+
+    with get_conn() as conn:
+        b = conn.execute("SELECT passenger_id FROM bookings WHERE id=?", (bid,)).fetchone()
+        if not b or b["passenger_id"] != pax["id"]:
+            return err("Not authorized to upgrade this booking.", 403)
+
     d = request.json or {}
     try:
         result = upgrade_booking(bid, d["seat_id"])
@@ -263,15 +302,32 @@ def api_upgrade(bid):
 @app.route("/api/waitlist", methods=["GET"])
 @require_login
 def api_waitlist():
+    # Only return waitlist for current user
+    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    pax = get_passenger_by_user(uid)
+    if not pax:
+        return err("Passenger profile not found.", 403)
+
     fid = request.args.get("flight_id")
-    return ok(get_waitlist(fid))
+    wl = get_waitlist(fid)
+    # Filter for logged in passenger
+    wl = [w for w in wl if w["passenger_id"] == pax["id"]]
+    return ok(wl)
 
 @app.route("/api/waitlist", methods=["POST"])
 @require_login
 def api_join_waitlist():
+    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    pax = get_passenger_by_user(uid)
+
     d = request.json or {}
+    pid = d.get("passenger_id")
+
+    if not pax or pax["id"] != pid:
+        return err("Not authorized to join waitlist for this passenger.", 403)
+
     try:
-        join_waitlist(d["passenger_id"], d["flight_id"], d.get("pref_class","Economy"))
+        join_waitlist(pid, d["flight_id"], d.get("pref_class","Economy"))
         return ok({"joined": True}), 201
     except (KeyError, ValueError) as e:
         return err(e)
@@ -279,6 +335,16 @@ def api_join_waitlist():
 @app.route("/api/waitlist/<wid>", methods=["DELETE"])
 @require_login
 def api_remove_waitlist(wid):
+    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    pax = get_passenger_by_user(uid)
+    if not pax:
+        return err("Passenger profile not found.", 403)
+
+    with get_conn() as conn:
+        w = conn.execute("SELECT passenger_id FROM waitlist WHERE id=?", (wid,)).fetchone()
+        if not w or w["passenger_id"] != pax["id"]:
+            return err("Not authorized to remove this waitlist entry.", 403)
+
     remove_from_waitlist(wid)
     return ok({"removed": wid})
 
