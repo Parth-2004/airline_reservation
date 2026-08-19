@@ -140,9 +140,15 @@ def init_db():
 
 def _seed_admin(conn):
     now = datetime.now().isoformat()
+    uid = str(uuid.uuid4())
     conn.execute(
         "INSERT INTO users (id,username,email,password,role,created_at) VALUES (?,?,?,?,?,?)",
-        (str(uuid.uuid4()), "admin", "admin@airbook.com", hash_password("admin123"), "admin", now)
+        (uid, "admin", "admin@airbook.com", hash_password("admin123"), "admin", now)
+    )
+    # Also create a passenger profile for admin
+    conn.execute(
+        "INSERT INTO passengers (id,user_id,name,email,tier,created_at) VALUES (?,?,?,?,?,?)",
+        (str(uuid.uuid4()), uid, "admin", "admin@airbook.com", "Regular", now)
     )
 
 
@@ -290,6 +296,12 @@ def login_user(username: str, password: str) -> dict:
             "passenger_id": pax["id"] if pax else None,
             "tier": pax["tier"] if pax else "Regular",
         }
+
+
+def get_passenger_by_user(user_id: str) -> dict:
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM passengers WHERE user_id=?", (user_id,)).fetchone()
+        return dict(row) if row else None
 
 
 def get_all_users(conn=None):
