@@ -216,18 +216,25 @@ def api_bookings():
     uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
 
+    with get_conn() as conn:
+        user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+        is_admin = user and user["role"] == "admin"
+
     pax_id   = request.args.get("passenger_id")
     fid      = request.args.get("flight_id")
     status   = request.args.get("status")
 
-    if not pax:
+    if not pax and not is_admin:
         return err("Passenger profile not found.", 403)
 
-    if pax_id and pax_id != pax["id"]:
+    if not is_admin and (pax_id and pax_id != pax["id"]):
         return err("Not authorized to view bookings for this passenger.", 403)
 
-    # Force the query to only return the logged in user's bookings
-    pax_id = pax["id"]
+    # Force the query to only return the logged in user's bookings (or the requested passenger if admin)
+    if not is_admin or not pax_id:
+        if not pax:
+            return err("Passenger ID is required for admins to view passenger bookings.", 400)
+        pax_id = pax["id"]
 
     return ok(get_bookings(pax_id, fid, status))
 
@@ -239,12 +246,16 @@ def api_book():
         uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
         pax = get_passenger_by_user(uid)
 
+        with get_conn() as conn:
+            user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+            is_admin = user and user["role"] == "admin"
+
         seat_ids = d.get("seat_ids")          # multi-seat: list
         seat_id  = d.get("seat_id")           # single seat: string (legacy)
         pid      = d["passenger_id"]
         fid      = d["flight_id"]
 
-        if not pax or pax["id"] != pid:
+        if not is_admin and (not pax or pax["id"] != pid):
             return err("Not authorized to book for this passenger.", 403)
 
         if seat_ids and isinstance(seat_ids, list):
@@ -263,12 +274,16 @@ def api_book():
 def api_cancel(bid):
     uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
-    if not pax:
-        return err("Passenger profile not found.", 403)
 
     with get_conn() as conn:
+        user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+        is_admin = user and user["role"] == "admin"
+
+        if not pax and not is_admin:
+            return err("Passenger profile not found.", 403)
+
         b = conn.execute("SELECT passenger_id FROM bookings WHERE id=?", (bid,)).fetchone()
-        if not b or b["passenger_id"] != pax["id"]:
+        if not b or (not is_admin and b["passenger_id"] != pax["id"]):
             return err("Not authorized to cancel this booking.", 403)
 
     try:
@@ -282,12 +297,16 @@ def api_cancel(bid):
 def api_upgrade(bid):
     uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
-    if not pax:
-        return err("Passenger profile not found.", 403)
 
     with get_conn() as conn:
+        user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+        is_admin = user and user["role"] == "admin"
+
+        if not pax and not is_admin:
+            return err("Passenger profile not found.", 403)
+
         b = conn.execute("SELECT passenger_id FROM bookings WHERE id=?", (bid,)).fetchone()
-        if not b or b["passenger_id"] != pax["id"]:
+        if not b or (not is_admin and b["passenger_id"] != pax["id"]):
             return err("Not authorized to upgrade this booking.", 403)
 
     d = request.json or {}
@@ -320,10 +339,14 @@ def api_join_waitlist():
     uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
 
+    with get_conn() as conn:
+        user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+        is_admin = user and user["role"] == "admin"
+
     d = request.json or {}
     pid = d.get("passenger_id")
 
-    if not pax or pax["id"] != pid:
+    if not is_admin and (not pax or pax["id"] != pid):
         return err("Not authorized to join waitlist for this passenger.", 403)
 
     try:
@@ -337,12 +360,16 @@ def api_join_waitlist():
 def api_remove_waitlist(wid):
     uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
-    if not pax:
-        return err("Passenger profile not found.", 403)
 
     with get_conn() as conn:
+        user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+        is_admin = user and user["role"] == "admin"
+
+        if not pax and not is_admin:
+            return err("Passenger profile not found.", 403)
+
         w = conn.execute("SELECT passenger_id FROM waitlist WHERE id=?", (wid,)).fetchone()
-        if not w or w["passenger_id"] != pax["id"]:
+        if not w or (not is_admin and w["passenger_id"] != pax["id"]):
             return err("Not authorized to remove this waitlist entry.", 403)
 
     remove_from_waitlist(wid)
