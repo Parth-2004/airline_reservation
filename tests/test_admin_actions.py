@@ -19,7 +19,7 @@ def test_admin_cancel_other_user_booking(client):
 
     with get_conn() as conn:
         res_seats = conn.execute("SELECT * FROM seats WHERE flight_id='TESTFLIGHT4'").fetchall()
-        available_seat = res_seats[0]["id"]
+        available_seat = next((s["id"] for s in res_seats if s["status"] == "available"), None)
 
     # Book a seat as user
     res = client.post("/api/bookings", headers={"X-User-Id": user_id}, json={
