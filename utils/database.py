@@ -238,6 +238,7 @@ def delete_flight(flight_id: str):
             (flight_id,)
         ).fetchone()[0] > 0:
             raise ValueError("Cannot delete a flight with active bookings.")
+        conn.execute("DELETE FROM bookings WHERE flight_id=?", (flight_id,))
         conn.execute("DELETE FROM flights WHERE id=?", (flight_id,))
 
 
