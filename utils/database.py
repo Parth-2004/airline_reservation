@@ -416,6 +416,8 @@ def book_seat(passenger_id: str, flight_id: str, seat_id: str) -> dict:
             (bid, passenger_id, flight_id, seat_id, seat["label"],
              seat["seat_class"], price, "Confirmed", now)
         )
+        # Remove passenger from waitlist if they are on it for this flight
+        conn.execute("DELETE FROM waitlist WHERE flight_id=? AND passenger_id=?", (flight_id, passenger_id))
         return {"id": bid, "seat_label": seat["label"], "seat_class": seat["seat_class"],
                 "price": price, "status": "Confirmed"}
 
@@ -458,6 +460,9 @@ def book_multiple_seats(passenger_id: str, flight_id: str, seat_ids: list) -> di
                 "id": bid, "seat_label": seat["label"],
                 "seat_class": seat["seat_class"], "price": price, "status": "Confirmed"
             })
+
+        # Remove passenger from waitlist if they are on it for this flight
+        conn.execute("DELETE FROM waitlist WHERE flight_id=? AND passenger_id=?", (flight_id, passenger_id))
 
         return {"bookings": bookings, "total_seats": len(bookings), "total_price": total_price}
 
