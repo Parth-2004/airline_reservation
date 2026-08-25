@@ -486,6 +486,46 @@ def get_bookings(passenger_id: str = None, flight_id: str = None, status: str = 
         return [dict(r) for r in conn.execute(q, params).fetchall()]
 
 
+def _process_waitlist(conn, flight_id: str, freed_class: str):
+    wl_entry = conn.execute(
+        "SELECT w.*, p.name, p.tier FROM waitlist w "
+        "JOIN passengers p ON p.id=w.passenger_id "
+        "WHERE w.flight_id=? ORDER BY w.priority DESC, w.added_at ASC LIMIT 1",
+        (flight_id,)
+    ).fetchone()
+    if not wl_entry:
+        return None
+
+    avail = conn.execute(
+        "SELECT * FROM seats WHERE flight_id=? AND seat_class=? AND status='available' LIMIT 1",
+        (flight_id, wl_entry["pref_class"])
+    ).fetchone()
+    if not avail:
+        avail = conn.execute(
+            "SELECT * FROM seats WHERE flight_id=? AND seat_class=? AND status='available' LIMIT 1",
+            (flight_id, freed_class)
+        ).fetchone()
+
+    if avail:
+        bid = f"BK{str(uuid.uuid4())[:6].upper()}"
+        price = PRICES.get(avail["seat_class"], 5000)
+        now = datetime.now().isoformat()
+        conn.execute("UPDATE seats SET status='booked', passenger_id=? WHERE id=?",
+                     (wl_entry["passenger_id"], avail["id"]))
+        conn.execute(
+            "INSERT INTO bookings (id,passenger_id,flight_id,seat_id,seat_label,"
+            "seat_class,price,status,booked_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            (bid, wl_entry["passenger_id"], flight_id, avail["id"],
+             avail["label"], avail["seat_class"], price, "Confirmed", now)
+        )
+        conn.execute("DELETE FROM waitlist WHERE id=?", (wl_entry["id"],))
+        return {
+            "booking_id": bid, "passenger": wl_entry["name"],
+            "seat": avail["label"], "seat_class": avail["seat_class"]
+        }
+    return None
+
+
 def cancel_booking(booking_id: str) -> dict:
     with get_conn() as conn:
         b = conn.execute("SELECT * FROM bookings WHERE id=?", (booking_id,)).fetchone()
@@ -496,43 +536,8 @@ def cancel_booking(booking_id: str) -> dict:
         conn.execute("UPDATE seats SET status='available', passenger_id=NULL WHERE id=?",
                      (b["seat_id"],))
         conn.execute("UPDATE bookings SET status='Cancelled' WHERE id=?", (booking_id,))
-        freed_class = b["seat_class"]
 
-        # Process waitlist
-        wl_entry = conn.execute(
-            "SELECT w.*, p.name, p.tier FROM waitlist w "
-            "JOIN passengers p ON p.id=w.passenger_id "
-            "WHERE w.flight_id=? ORDER BY w.priority DESC, w.added_at ASC LIMIT 1",
-            (b["flight_id"],)
-        ).fetchone()
-        auto_booking = None
-        if wl_entry:
-            avail = conn.execute(
-                "SELECT * FROM seats WHERE flight_id=? AND seat_class=? AND status='available' LIMIT 1",
-                (b["flight_id"], wl_entry["pref_class"])
-            ).fetchone()
-            if not avail:
-                avail = conn.execute(
-                    "SELECT * FROM seats WHERE flight_id=? AND seat_class=? AND status='available' LIMIT 1",
-                    (b["flight_id"], freed_class)
-                ).fetchone()
-            if avail:
-                bid = f"BK{str(uuid.uuid4())[:6].upper()}"
-                price = PRICES.get(avail["seat_class"], 5000)
-                now = datetime.now().isoformat()
-                conn.execute("UPDATE seats SET status='booked', passenger_id=? WHERE id=?",
-                             (wl_entry["passenger_id"], avail["id"]))
-                conn.execute(
-                    "INSERT INTO bookings (id,passenger_id,flight_id,seat_id,seat_label,"
-                    "seat_class,price,status,booked_at) VALUES (?,?,?,?,?,?,?,?,?)",
-                    (bid, wl_entry["passenger_id"], b["flight_id"], avail["id"],
-                     avail["label"], avail["seat_class"], price, "Confirmed", now)
-                )
-                conn.execute("DELETE FROM waitlist WHERE id=?", (wl_entry["id"],))
-                auto_booking = {
-                    "booking_id": bid, "passenger": wl_entry["name"],
-                    "seat": avail["label"], "seat_class": avail["seat_class"]
-                }
+        auto_booking = _process_waitlist(conn, b["flight_id"], b["seat_class"])
 
         return {"cancelled": booking_id, "auto_assigned": auto_booking}
 
@@ -562,9 +567,13 @@ def upgrade_booking(booking_id: str, new_seat_id: str) -> dict:
             (new_seat_id, new_seat["label"], new_seat["seat_class"],
              PRICES.get(new_seat["seat_class"], 5000), booking_id)
         )
+
+        auto_booking = _process_waitlist(conn, b["flight_id"], old_class)
+
         return {"old_seat": old_label, "new_seat": new_seat["label"],
                 "new_class": new_seat["seat_class"],
-                "new_price": PRICES.get(new_seat["seat_class"], 5000)}
+                "new_price": PRICES.get(new_seat["seat_class"], 5000),
+                "auto_assigned": auto_booking}
 
 
 # ─── Waitlist ──────────────────────────────────────────────────────────────────
