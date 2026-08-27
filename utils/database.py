@@ -330,6 +330,8 @@ def get_all_passengers():
 def update_passenger_tier(passenger_id: str, tier: str):
     with get_conn() as conn:
         conn.execute("UPDATE passengers SET tier=? WHERE id=?", (tier, passenger_id))
+        priority = TIER_PRIORITY.get(tier, 0)
+        conn.execute("UPDATE waitlist SET priority=? WHERE passenger_id=?", (priority, passenger_id))
 
 
 # ─── Flights ──────────────────────────────────────────────────────────────────
