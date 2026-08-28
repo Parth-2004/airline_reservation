@@ -111,3 +111,37 @@ def test_booking_cancel(client):
     res = client.get(f"/api/bookings?passenger_id={passenger_id}", headers={"X-User-Id": user_id})
     bookings = res.get_json()["data"]
     assert bookings[0]["status"] == "Cancelled"
+
+def test_register_empty_fields(client):
+    # Test empty username
+    res = client.post("/api/auth/register", json={
+        "username": "",
+        "email": "test@example.com",
+        "password": "testpassword123"
+    })
+    assert res.status_code == 400
+    data = res.get_json()
+    assert data["ok"] is False
+    assert data["error"] == "Username cannot be empty."
+
+    # Test empty email
+    res = client.post("/api/auth/register", json={
+        "username": "testuser",
+        "email": "   ",
+        "password": "testpassword123"
+    })
+    assert res.status_code == 400
+    data = res.get_json()
+    assert data["ok"] is False
+    assert data["error"] == "Email cannot be empty."
+
+    # Test empty password
+    res = client.post("/api/auth/register", json={
+        "username": "testuser",
+        "email": "test@example.com",
+        "password": ""
+    })
+    assert res.status_code == 400
+    data = res.get_json()
+    assert data["ok"] is False
+    assert data["error"] == "Password cannot be empty."
