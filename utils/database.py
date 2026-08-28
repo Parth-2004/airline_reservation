@@ -245,6 +245,13 @@ def delete_flight(flight_id: str):
 # ─── Auth ─────────────────────────────────────────────────────────────────────
 
 def register_user(username: str, email: str, password: str, role: str = "user") -> dict:
+    if not username or not username.strip():
+        raise ValueError("Username cannot be empty.")
+    if not email or not email.strip():
+        raise ValueError("Email cannot be empty.")
+    if not password or not password.strip():
+        raise ValueError("Password cannot be empty.")
+
     with get_conn() as conn:
         existing = conn.execute(
             "SELECT id FROM users WHERE username=? OR email=?", (username, email)
