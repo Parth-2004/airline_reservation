@@ -201,12 +201,19 @@ def api_flight(fid):
 
 @app.route("/api/flights/<fid>/seatmap", methods=["GET"])
 def api_seatmap(fid):
-    return ok(get_seat_map(fid))
+    seatmap = get_seat_map(fid)
+    for row in seatmap:
+        for seat in row:
+            seat.pop("passenger_id", None)
+    return ok(seatmap)
 
 @app.route("/api/flights/<fid>/seats", methods=["GET"])
 def api_seats(fid):
     cls = request.args.get("class")
-    return ok(get_seats(fid, cls))
+    seats = get_seats(fid, cls)
+    for seat in seats:
+        seat.pop("passenger_id", None)
+    return ok(seats)
 
 # ─── Bookings ─────────────────────────────────────────────────────────────────
 

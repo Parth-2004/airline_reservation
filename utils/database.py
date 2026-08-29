@@ -367,6 +367,7 @@ def get_seats(flight_id: str, seat_class: str = None):
                 "SELECT * FROM seats WHERE flight_id=? ORDER BY row_num,col_num",
                 (flight_id,)
             ).fetchall()
+
         return [dict(r) for r in rows]
 
 
