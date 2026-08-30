@@ -401,6 +401,60 @@ def get_flight_stats(flight_id: str):
         return stats
 
 
+def get_all_flight_stats():
+    """Retrieve stats for all flights in a batched query to avoid N+1 queries."""
+    stats = {}
+    with get_conn() as conn:
+        seat_stats = conn.execute("""
+            SELECT
+                flight_id,
+                seat_class,
+                COUNT(*) as total,
+                SUM(CASE WHEN status='booked' THEN 1 ELSE 0 END) as booked
+            FROM seats
+            GROUP BY flight_id, seat_class
+        """).fetchall()
+
+        wl_stats = conn.execute("""
+            SELECT flight_id, COUNT(*) as count
+            FROM waitlist
+            GROUP BY flight_id
+        """).fetchall()
+
+    for row in seat_stats:
+        fid = row["flight_id"]
+        if fid not in stats:
+            stats[fid] = {
+                "First": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+                "Business": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+                "Economy": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+                "waitlist": 0
+            }
+        cls = row["seat_class"]
+        if cls in stats[fid]:
+            total = row["total"]
+            booked = row["booked"]
+            stats[fid][cls] = {
+                "total": total,
+                "booked": booked,
+                "available": total - booked,
+                "pct": round(booked / total * 100, 1) if total else 0.0
+            }
+
+    for row in wl_stats:
+        fid = row["flight_id"]
+        if fid not in stats:
+            stats[fid] = {
+                "First": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+                "Business": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+                "Economy": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+                "waitlist": 0
+            }
+        stats[fid]["waitlist"] = row["count"]
+
+    return stats
+
+
 # ─── Bookings ─────────────────────────────────────────────────────────────────
 
 BOOK_COUNTER = [1]
