@@ -11,7 +11,7 @@ from utils.database import (
     init_db, get_conn,
     register_user, login_user, get_all_users, get_passenger_by_user,
     get_all_passengers, update_passenger_tier,
-    get_all_flights, get_flight, get_seats, get_seat_map, get_flight_stats,
+    get_all_flights, get_flight, get_seats, get_seat_map, get_flight_stats, get_all_flight_stats,
     add_flight, delete_flight, AIRCRAFT_LAYOUTS,
     book_seat, book_multiple_seats, get_bookings, cancel_booking, upgrade_booking,
     join_waitlist, get_waitlist, remove_from_waitlist,
@@ -184,10 +184,16 @@ def api_update_tier(pid):
 @app.route("/api/flights", methods=["GET"])
 def api_flights():
     flights = get_all_flights()
+    stats_map = get_all_flight_stats()
     result = []
+    default_stats = {
+        "First": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+        "Business": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+        "Economy": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+        "waitlist": 0
+    }
     for f in flights:
-        stats = get_flight_stats(f["id"])
-        f["stats"] = stats
+        f["stats"] = stats_map.get(f["id"], default_stats)
         result.append(f)
     return ok(result)
 
