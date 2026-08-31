@@ -462,6 +462,7 @@ BOOK_COUNTER = [1]
 
 def book_seat(passenger_id: str, flight_id: str, seat_id: str) -> dict:
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         seat = conn.execute(
             "SELECT * FROM seats WHERE id=? AND flight_id=?", (seat_id, flight_id)
         ).fetchone()
@@ -495,6 +496,7 @@ def book_multiple_seats(passenger_id: str, flight_id: str, seat_ids: list) -> di
         raise ValueError("Cannot book more than 9 seats at once.")
 
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         bookings = []
         total_price = 0
         now = datetime.now().isoformat()
@@ -592,6 +594,7 @@ def _process_waitlist(conn, flight_id: str, freed_class: str):
 
 def cancel_booking(booking_id: str) -> dict:
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         b = conn.execute("SELECT * FROM bookings WHERE id=?", (booking_id,)).fetchone()
         if not b or b["status"] == "Cancelled":
             raise ValueError("Booking not found or already cancelled.")
@@ -608,6 +611,7 @@ def cancel_booking(booking_id: str) -> dict:
 
 def upgrade_booking(booking_id: str, new_seat_id: str) -> dict:
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         b = conn.execute("SELECT * FROM bookings WHERE id=?", (booking_id,)).fetchone()
         if not b or b["status"] == "Cancelled":
             raise ValueError("Booking not found.")
