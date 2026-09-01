@@ -196,6 +196,15 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
                departure_time: str, arrival_time: str,
                aircraft_model: str = "Boeing 737") -> dict:
     """Admin: add a new flight and auto-generate its seats."""
+    try:
+        dt_dep = datetime.fromisoformat(departure_time)
+        dt_arr = datetime.fromisoformat(arrival_time)
+    except ValueError:
+        raise ValueError("Invalid date format.")
+
+    if dt_arr <= dt_dep:
+        raise ValueError("Arrival time must be after departure time.")
+
     with get_conn() as conn:
         # Validate no duplicate
         if conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone():
