@@ -1,4 +1,5 @@
 import pytest
+from utils.database import add_flight
 
 def test_admin_flights(client):
     res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
@@ -46,3 +47,13 @@ def test_admin_bookings(client):
 
     res = client.get("/api/admin/bookings", headers={"X-User-Id": admin_id})
     assert res.status_code == 200
+
+def test_add_flight_invalid_dates():
+    with pytest.raises(ValueError, match="Invalid date format."):
+        add_flight("TF_INV1", "A", "A", "B", "B", "invalid_date", "invalid_date")
+
+    with pytest.raises(ValueError, match="Arrival time must be after departure time."):
+        add_flight("TF_INV2", "A", "A", "B", "B", "2024-12-01T22:00:00", "2024-12-01T10:00:00")
+
+    with pytest.raises(ValueError, match="Arrival time must be after departure time."):
+        add_flight("TF_INV3", "A", "A", "B", "B", "2024-12-01T10:00:00", "2024-12-01T10:00:00")
