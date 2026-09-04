@@ -57,3 +57,73 @@ def test_add_flight_invalid_dates():
 
     with pytest.raises(ValueError, match="Arrival time must be after departure time."):
         add_flight("TF_INV3", "A", "A", "B", "B", "2024-12-01T10:00:00", "2024-12-01T10:00:00")
+
+
+def test_add_flight_empty_fields(client):
+    res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    admin_id = res.get_json()["data"]["id"]
+
+    res = client.post("/api/admin/flights", headers={"X-User-Id": admin_id}, json={
+        "flight_id": "",
+        "origin": "JFK",
+        "origin_full": "New York",
+        "destination": "LHR",
+        "dest_full": "London",
+        "departure_time": "2024-12-01T10:00:00",
+        "arrival_time": "2024-12-01T22:00:00",
+        "aircraft_model": "Boeing 737"
+    })
+    assert res.status_code == 400
+    assert "Flight ID cannot be empty" in res.get_json()["error"]
+
+    res = client.post("/api/admin/flights", headers={"X-User-Id": admin_id}, json={
+        "flight_id": "TEST",
+        "origin": "  ",
+        "origin_full": "New York",
+        "destination": "LHR",
+        "dest_full": "London",
+        "departure_time": "2024-12-01T10:00:00",
+        "arrival_time": "2024-12-01T22:00:00",
+        "aircraft_model": "Boeing 737"
+    })
+    assert res.status_code == 400
+    assert "Origin cannot be empty" in res.get_json()["error"]
+
+    res = client.post("/api/admin/flights", headers={"X-User-Id": admin_id}, json={
+        "flight_id": "TEST",
+        "origin": "JFK",
+        "origin_full": "",
+        "destination": "LHR",
+        "dest_full": "London",
+        "departure_time": "2024-12-01T10:00:00",
+        "arrival_time": "2024-12-01T22:00:00",
+        "aircraft_model": "Boeing 737"
+    })
+    assert res.status_code == 400
+    assert "Origin full name cannot be empty" in res.get_json()["error"]
+
+    res = client.post("/api/admin/flights", headers={"X-User-Id": admin_id}, json={
+        "flight_id": "TEST",
+        "origin": "JFK",
+        "origin_full": "New York",
+        "destination": "  ",
+        "dest_full": "London",
+        "departure_time": "2024-12-01T10:00:00",
+        "arrival_time": "2024-12-01T22:00:00",
+        "aircraft_model": "Boeing 737"
+    })
+    assert res.status_code == 400
+    assert "Destination cannot be empty" in res.get_json()["error"]
+
+    res = client.post("/api/admin/flights", headers={"X-User-Id": admin_id}, json={
+        "flight_id": "TEST",
+        "origin": "JFK",
+        "origin_full": "New York",
+        "destination": "LHR",
+        "dest_full": "",
+        "departure_time": "2024-12-01T10:00:00",
+        "arrival_time": "2024-12-01T22:00:00",
+        "aircraft_model": "Boeing 737"
+    })
+    assert res.status_code == 400
+    assert "Destination full name cannot be empty" in res.get_json()["error"]

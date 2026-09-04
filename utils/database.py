@@ -196,6 +196,17 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
                departure_time: str, arrival_time: str,
                aircraft_model: str = "Boeing 737") -> dict:
     """Admin: add a new flight and auto-generate its seats."""
+    if not flight_id or not flight_id.strip():
+        raise ValueError("Flight ID cannot be empty.")
+    if not origin or not origin.strip():
+        raise ValueError("Origin cannot be empty.")
+    if not origin_full or not origin_full.strip():
+        raise ValueError("Origin full name cannot be empty.")
+    if not destination or not destination.strip():
+        raise ValueError("Destination cannot be empty.")
+    if not dest_full or not dest_full.strip():
+        raise ValueError("Destination full name cannot be empty.")
+
     try:
         dt_dep = datetime.fromisoformat(departure_time)
         dt_arr = datetime.fromisoformat(arrival_time)
