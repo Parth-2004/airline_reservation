@@ -127,3 +127,33 @@ def test_add_flight_empty_fields(client):
     })
     assert res.status_code == 400
     assert "Destination full name cannot be empty" in res.get_json()["error"]
+
+def test_add_flight_none_values(client):
+    res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    admin_id = res.get_json()["data"]["id"]
+
+    res = client.post("/api/admin/flights", headers={"X-User-Id": admin_id}, json={
+        "flight_id": None,
+        "origin": "JFK",
+        "origin_full": "New York",
+        "destination": "LHR",
+        "dest_full": "London",
+        "departure_time": "2024-12-01T10:00:00",
+        "arrival_time": "2024-12-01T22:00:00",
+        "aircraft_model": "Boeing 737"
+    })
+    assert res.status_code == 400
+    assert "Flight ID cannot be empty" in res.get_json()["error"]
+
+    res = client.post("/api/admin/flights", headers={"X-User-Id": admin_id}, json={
+        "flight_id": "TEST1",
+        "origin": "JFK",
+        "origin_full": "New York",
+        "destination": "LHR",
+        "dest_full": "London",
+        "departure_time": None,
+        "arrival_time": "2024-12-01T22:00:00",
+        "aircraft_model": "Boeing 737"
+    })
+    assert res.status_code == 400
+    assert "Invalid date format." in res.get_json()["error"]
