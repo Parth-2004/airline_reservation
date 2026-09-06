@@ -176,8 +176,11 @@ def api_passengers():
 @require_admin
 def api_update_tier(pid):
     d = request.json or {}
-    update_passenger_tier(pid, d.get("tier","Regular"))
-    return ok({"passenger_id": pid})
+    try:
+        update_passenger_tier(pid, d.get("tier","Regular"))
+        return ok({"passenger_id": pid})
+    except ValueError as e:
+        return err(e)
 
 # ─── Flights ──────────────────────────────────────────────────────────────────
 

@@ -355,6 +355,8 @@ def get_all_passengers():
 
 
 def update_passenger_tier(passenger_id: str, tier: str):
+    if tier not in TIER_PRIORITY:
+        raise ValueError(f"Invalid tier. Must be one of: {', '.join(TIER_PRIORITY.keys())}")
     with get_conn() as conn:
         conn.execute("UPDATE passengers SET tier=? WHERE id=?", (tier, passenger_id))
         priority = TIER_PRIORITY.get(tier, 0)
@@ -672,6 +674,8 @@ TIER_PRIORITY = {"Regular": 0, "Gold": 1, "Platinum": 2}
 
 
 def join_waitlist(passenger_id: str, flight_id: str, pref_class: str = "Economy"):
+    if pref_class not in PRICES:
+        raise ValueError(f"Invalid preferred class. Must be one of: {', '.join(PRICES.keys())}")
     with get_conn() as conn:
         flight = conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone()
         if not flight:
