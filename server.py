@@ -210,6 +210,9 @@ def api_flight(fid):
 
 @app.route("/api/flights/<fid>/seatmap", methods=["GET"])
 def api_seatmap(fid):
+    f = get_flight(fid)
+    if not f:
+        return err("Flight not found.", 404)
     seatmap = get_seat_map(fid)
     for row in seatmap:
         for seat in row:
@@ -218,6 +221,9 @@ def api_seatmap(fid):
 
 @app.route("/api/flights/<fid>/seats", methods=["GET"])
 def api_seats(fid):
+    f = get_flight(fid)
+    if not f:
+        return err("Flight not found.", 404)
     cls = request.args.get("class")
     seats = get_seats(fid, cls)
     for seat in seats:
@@ -299,7 +305,9 @@ def api_cancel(bid):
             return err("Passenger profile not found.", 403)
 
         b = conn.execute("SELECT passenger_id FROM bookings WHERE id=?", (bid,)).fetchone()
-        if not b or (not is_admin and b["passenger_id"] != pax["id"]):
+        if not b:
+            return err("Booking not found.", 404)
+        if not is_admin and b["passenger_id"] != pax["id"]:
             return err("Not authorized to cancel this booking.", 403)
 
     try:
@@ -322,7 +330,9 @@ def api_upgrade(bid):
             return err("Passenger profile not found.", 403)
 
         b = conn.execute("SELECT passenger_id FROM bookings WHERE id=?", (bid,)).fetchone()
-        if not b or (not is_admin and b["passenger_id"] != pax["id"]):
+        if not b:
+            return err("Booking not found.", 404)
+        if not is_admin and b["passenger_id"] != pax["id"]:
             return err("Not authorized to upgrade this booking.", 403)
 
     d = request.json or {}
@@ -385,7 +395,9 @@ def api_remove_waitlist(wid):
             return err("Passenger profile not found.", 403)
 
         w = conn.execute("SELECT passenger_id FROM waitlist WHERE id=?", (wid,)).fetchone()
-        if not w or (not is_admin and w["passenger_id"] != pax["id"]):
+        if not w:
+            return err("Waitlist entry not found.", 404)
+        if not is_admin and w["passenger_id"] != pax["id"]:
             return err("Not authorized to remove this waitlist entry.", 403)
 
     remove_from_waitlist(wid)
