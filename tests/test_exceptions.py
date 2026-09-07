@@ -30,3 +30,11 @@ def test_invalid_register(client):
         "password": "testpassword123"
     })
     assert res.status_code == 400
+
+def test_missing_flight_seatmap(client):
+    res = client.get("/api/flights/NONEXISTENT/seatmap")
+    assert res.status_code == 404
+
+def test_missing_flight_seats(client):
+    res = client.get("/api/flights/NONEXISTENT/seats")
+    assert res.status_code == 404
