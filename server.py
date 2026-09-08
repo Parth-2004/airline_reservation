@@ -41,6 +41,8 @@ def ok(data=None, **kw):
     return jsonify({"ok": True, "data": data, **kw})
 
 def err(msg, code=400):
+    if isinstance(msg, KeyError):
+        msg = f"Missing required field: {msg.args[0]}"
     return jsonify({"ok": False, "error": str(msg)}), code
 
 def require_login(f):
