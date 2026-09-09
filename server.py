@@ -182,6 +182,8 @@ def api_update_tier(pid):
         update_passenger_tier(pid, d.get("tier","Regular"))
         return ok({"passenger_id": pid})
     except ValueError as e:
+        if str(e) == "Passenger not found.":
+            return err(e, 404)
         return err(e)
 
 # ─── Flights ──────────────────────────────────────────────────────────────────

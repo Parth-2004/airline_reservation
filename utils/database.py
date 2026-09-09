@@ -358,6 +358,9 @@ def update_passenger_tier(passenger_id: str, tier: str):
     if tier not in TIER_PRIORITY:
         raise ValueError(f"Invalid tier. Must be one of: {', '.join(TIER_PRIORITY.keys())}")
     with get_conn() as conn:
+        row = conn.execute("SELECT id FROM passengers WHERE id=?", (passenger_id,)).fetchone()
+        if not row:
+            raise ValueError("Passenger not found.")
         conn.execute("UPDATE passengers SET tier=? WHERE id=?", (tier, passenger_id))
         priority = TIER_PRIORITY.get(tier, 0)
         conn.execute("UPDATE waitlist SET priority=? WHERE passenger_id=?", (priority, passenger_id))
