@@ -488,6 +488,11 @@ BOOK_COUNTER = [1]
 def book_seat(passenger_id: str, flight_id: str, seat_id: str) -> dict:
     with get_conn() as conn:
         conn.execute("BEGIN IMMEDIATE")
+
+        pax = conn.execute("SELECT id FROM passengers WHERE id=?", (passenger_id,)).fetchone()
+        if not pax:
+            raise ValueError("Passenger not found.")
+
         seat = conn.execute(
             "SELECT * FROM seats WHERE id=? AND flight_id=?", (seat_id, flight_id)
         ).fetchone()
@@ -522,6 +527,11 @@ def book_multiple_seats(passenger_id: str, flight_id: str, seat_ids: list) -> di
 
     with get_conn() as conn:
         conn.execute("BEGIN IMMEDIATE")
+
+        pax = conn.execute("SELECT id FROM passengers WHERE id=?", (passenger_id,)).fetchone()
+        if not pax:
+            raise ValueError("Passenger not found.")
+
         bookings = []
         total_price = 0
         now = datetime.now().isoformat()
