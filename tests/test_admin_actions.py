@@ -25,10 +25,11 @@ def test_admin_cancel_other_user_booking(client):
     res = client.post("/api/bookings", headers={"X-User-Id": user_id}, json={
         "passenger_id": pax_id,
         "flight_id": "TESTFLIGHT4",
-        "seat_ids": [available_seat]
+        "seat_id": available_seat
     })
+    print(res.get_json())
     assert res.status_code == 201
-    booking_id = res.get_json()["data"]["bookings"][0]["id"]
+    booking_id = res.get_json()["data"]["id"]
 
     # Cancel as admin
     res = client.post(f"/api/bookings/{booking_id}/cancel", headers={"X-User-Id": admin_id})

@@ -411,22 +411,38 @@ def get_seat_map(flight_id: str):
 
 def get_flight_stats(flight_id: str):
     with get_conn() as conn:
-        stats = {}
+        stats = {
+            "First": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+            "Business": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+            "Economy": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
+            "waitlist": 0
+        }
+
+        # Single query to get all seat counts grouped by class and status
+        rows = conn.execute("""
+            SELECT seat_class, status, COUNT(*) as count
+            FROM seats
+            WHERE flight_id=?
+            GROUP BY seat_class, status
+        """, (flight_id,)).fetchall()
+
+        for r in rows:
+            cls = r["seat_class"]
+            if cls in stats:
+                stats[cls]["total"] += r["count"]
+                if r["status"] == "booked":
+                    stats[cls]["booked"] += r["count"]
+
         for cls in ["First", "Business", "Economy"]:
-            total = conn.execute(
-                "SELECT COUNT(*) FROM seats WHERE flight_id=? AND seat_class=?",
-                (flight_id, cls)
-            ).fetchone()[0]
-            booked = conn.execute(
-                "SELECT COUNT(*) FROM seats WHERE flight_id=? AND seat_class=? AND status='booked'",
-                (flight_id, cls)
-            ).fetchone()[0]
-            stats[cls] = {"total": total, "booked": booked, "available": total - booked,
-                          "pct": round(booked / total * 100, 1) if total else 0}
-        wl = conn.execute(
+            t = stats[cls]["total"]
+            b = stats[cls]["booked"]
+            stats[cls]["available"] = t - b
+            stats[cls]["pct"] = round(b / t * 100, 1) if t else 0.0
+
+        stats["waitlist"] = conn.execute(
             "SELECT COUNT(*) FROM waitlist WHERE flight_id=?", (flight_id,)
         ).fetchone()[0]
-        stats["waitlist"] = wl
+
         return stats
 
 
@@ -450,15 +466,20 @@ def get_all_flight_stats():
             GROUP BY flight_id
         """).fetchall()
 
-    for row in seat_stats:
-        fid = row["flight_id"]
-        if fid not in stats:
+
+    with get_conn() as conn:
+        flights = conn.execute("SELECT id FROM flights").fetchall()
+        for f in flights:
+            fid = f["id"]
             stats[fid] = {
                 "First": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
                 "Business": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
                 "Economy": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
                 "waitlist": 0
             }
+
+    for row in seat_stats:
+        fid = row["flight_id"]
         cls = row["seat_class"]
         if cls in stats[fid]:
             total = row["total"]
@@ -472,14 +493,8 @@ def get_all_flight_stats():
 
     for row in wl_stats:
         fid = row["flight_id"]
-        if fid not in stats:
-            stats[fid] = {
-                "First": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
-                "Business": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
-                "Economy": {"total": 0, "booked": 0, "available": 0, "pct": 0.0},
-                "waitlist": 0
-            }
-        stats[fid]["waitlist"] = row["count"]
+        if fid in stats:
+            stats[fid]["waitlist"] = row["count"]
 
     return stats
 
