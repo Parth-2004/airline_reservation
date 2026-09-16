@@ -58,3 +58,20 @@ def test_booking_key_error(client):
     assert res.status_code == 400
     assert "Missing required field" in res.get_json()["error"]
     assert "passenger_id" in res.get_json()["error"]
+
+def test_invalid_register_trailing_spaces(client):
+    username = f"testuser_spaces_{int(time.time())}"
+    res = client.post("/api/auth/register", json={
+        "username": f" {username} ",
+        "email": f" {username}@example.com ",
+        "password": " testpassword123 "
+    })
+    assert res.status_code == 201
+
+    res2 = client.post("/api/auth/register", json={
+        "username": username,
+        "email": f"{username}@example.com",
+        "password": "testpassword123"
+    })
+    # This should fail because the username was stripped
+    assert res2.status_code == 400

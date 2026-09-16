@@ -274,6 +274,9 @@ def register_user(username: str, email: str, password: str, role: str = "user") 
     if not password or not password.strip():
         raise ValueError("Password cannot be empty.")
 
+    username = username.strip()
+    email = email.strip()
+
     with get_conn() as conn:
         conn.execute("BEGIN IMMEDIATE")
         existing = conn.execute(
