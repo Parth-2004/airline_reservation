@@ -36,6 +36,10 @@ def test_admin_users_and_passengers(client):
     res = client.get("/api/admin/users", headers={"X-User-Id": admin_id})
     assert res.status_code == 200
 
+    res = client.get("/api/admin/waitlist", headers={"X-User-Id": admin_id})
+    assert res.status_code == 200
+    assert "data" in res.get_json()
+
     res = client.get("/api/passengers", headers={"X-User-Id": admin_id})
     assert res.status_code == 200
 
