@@ -132,6 +132,11 @@ def api_occupancy():
 def api_all_bookings():
     return ok(get_bookings())
 
+@app.route("/api/admin/waitlist", methods=["GET"])
+@require_admin
+def api_all_waitlist():
+    return ok(get_waitlist())
+
 @app.route("/api/admin/aircraft-models", methods=["GET"])
 @require_admin
 def api_aircraft_models():
@@ -305,12 +310,13 @@ def api_cancel(bid):
         user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
         is_admin = user and user["role"] == "admin"
 
-        if not pax and not is_admin:
-            return err("Passenger profile not found.", 403)
-
         b = conn.execute("SELECT passenger_id FROM bookings WHERE id=?", (bid,)).fetchone()
         if not b:
             return err("Booking not found.", 404)
+
+        if not pax and not is_admin:
+            return err("Passenger profile not found.", 403)
+
         if not is_admin and b["passenger_id"] != pax["id"]:
             return err("Not authorized to cancel this booking.", 403)
 
@@ -330,12 +336,13 @@ def api_upgrade(bid):
         user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
         is_admin = user and user["role"] == "admin"
 
-        if not pax and not is_admin:
-            return err("Passenger profile not found.", 403)
-
         b = conn.execute("SELECT passenger_id FROM bookings WHERE id=?", (bid,)).fetchone()
         if not b:
             return err("Booking not found.", 404)
+
+        if not pax and not is_admin:
+            return err("Passenger profile not found.", 403)
+
         if not is_admin and b["passenger_id"] != pax["id"]:
             return err("Not authorized to upgrade this booking.", 403)
 
@@ -395,12 +402,13 @@ def api_remove_waitlist(wid):
         user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
         is_admin = user and user["role"] == "admin"
 
-        if not pax and not is_admin:
-            return err("Passenger profile not found.", 403)
-
         w = conn.execute("SELECT passenger_id FROM waitlist WHERE id=?", (wid,)).fetchone()
         if not w:
             return err("Waitlist entry not found.", 404)
+
+        if not pax and not is_admin:
+            return err("Passenger profile not found.", 403)
+
         if not is_admin and w["passenger_id"] != pax["id"]:
             return err("Not authorized to remove this waitlist entry.", 403)
 
