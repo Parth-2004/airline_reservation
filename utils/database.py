@@ -217,6 +217,7 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
         raise ValueError("Arrival time must be after departure time.")
 
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         # Validate no duplicate
         if conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone():
             raise ValueError(f"Flight ID '{flight_id}' already exists.")
@@ -250,6 +251,7 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
 def delete_flight(flight_id: str):
     """Admin: remove a flight (cascades to seats, waitlist)."""
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         flight = conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone()
         if not flight:
             raise ValueError("Flight not found.")
@@ -273,6 +275,7 @@ def register_user(username: str, email: str, password: str, role: str = "user") 
         raise ValueError("Password cannot be empty.")
 
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         existing = conn.execute(
             "SELECT id FROM users WHERE username=? OR email=?", (username, email)
         ).fetchone()
@@ -358,6 +361,7 @@ def update_passenger_tier(passenger_id: str, tier: str):
     if tier not in TIER_PRIORITY:
         raise ValueError(f"Invalid tier. Must be one of: {', '.join(TIER_PRIORITY.keys())}")
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         row = conn.execute("SELECT id FROM passengers WHERE id=?", (passenger_id,)).fetchone()
         if not row:
             raise ValueError("Passenger not found.")
@@ -690,6 +694,7 @@ def join_waitlist(passenger_id: str, flight_id: str, pref_class: str = "Economy"
     if pref_class not in PRICES:
         raise ValueError(f"Invalid preferred class. Must be one of: {', '.join(PRICES.keys())}")
     with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         flight = conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone()
         if not flight:
             raise ValueError("Flight not found.")
