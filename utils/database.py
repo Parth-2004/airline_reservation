@@ -18,7 +18,7 @@ DB_PATH = os.environ.get(
 
 @contextmanager
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, isolation_level="IMMEDIATE")
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
@@ -217,34 +217,37 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
         raise ValueError("Arrival time must be after departure time.")
 
     with get_conn() as conn:
-        # Validate no duplicate
-        if conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone():
+        try:
+            # Validate no duplicate
+            if conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone():
+                raise ValueError(f"Flight ID '{flight_id}' already exists.")
+
+            conn.execute(
+                "INSERT INTO flights (id,origin,origin_full,destination,dest_full,"
+                "departure_time,arrival_time,aircraft_model,status) VALUES (?,?,?,?,?,?,?,?,?)",
+                (flight_id, origin.upper(), origin_full, destination.upper(), dest_full,
+                 departure_time, arrival_time, aircraft_model, "Scheduled")
+            )
+
+            layout = AIRCRAFT_LAYOUTS.get(aircraft_model, AIRCRAFT_LAYOUTS["Boeing 737"])
+            row_idx = 0
+            seat_count = 0
+            for seg in layout:
+                for _ in range(seg["rows"]):
+                    for c in range(seg["cols"]):
+                        label = _seat_label(row_idx, c)
+                        seat_id = f"{flight_id}_{label}"
+                        conn.execute(
+                            "INSERT INTO seats (id,flight_id,row_num,col_num,seat_class,label,status)"
+                            " VALUES (?,?,?,?,?,?,?)",
+                            (seat_id, flight_id, row_idx, c, seg["seat_class"], label, "available")
+                        )
+                        seat_count += 1
+                    row_idx += 1
+
+            return {"flight_id": flight_id, "seats_created": seat_count, "aircraft": aircraft_model}
+        except sqlite3.IntegrityError:
             raise ValueError(f"Flight ID '{flight_id}' already exists.")
-
-        conn.execute(
-            "INSERT INTO flights (id,origin,origin_full,destination,dest_full,"
-            "departure_time,arrival_time,aircraft_model,status) VALUES (?,?,?,?,?,?,?,?,?)",
-            (flight_id, origin.upper(), origin_full, destination.upper(), dest_full,
-             departure_time, arrival_time, aircraft_model, "Scheduled")
-        )
-
-        layout = AIRCRAFT_LAYOUTS.get(aircraft_model, AIRCRAFT_LAYOUTS["Boeing 737"])
-        row_idx = 0
-        seat_count = 0
-        for seg in layout:
-            for _ in range(seg["rows"]):
-                for c in range(seg["cols"]):
-                    label = _seat_label(row_idx, c)
-                    seat_id = f"{flight_id}_{label}"
-                    conn.execute(
-                        "INSERT INTO seats (id,flight_id,row_num,col_num,seat_class,label,status)"
-                        " VALUES (?,?,?,?,?,?,?)",
-                        (seat_id, flight_id, row_idx, c, seg["seat_class"], label, "available")
-                    )
-                    seat_count += 1
-                row_idx += 1
-
-        return {"flight_id": flight_id, "seats_created": seat_count, "aircraft": aircraft_model}
 
 
 def delete_flight(flight_id: str):
@@ -273,23 +276,26 @@ def register_user(username: str, email: str, password: str, role: str = "user") 
         raise ValueError("Password cannot be empty.")
 
     with get_conn() as conn:
-        existing = conn.execute(
-            "SELECT id FROM users WHERE username=? OR email=?", (username, email)
-        ).fetchone()
-        if existing:
+        try:
+            existing = conn.execute(
+                "SELECT id FROM users WHERE username=? OR email=?", (username, email)
+            ).fetchone()
+            if existing:
+                raise ValueError("Username or email already exists.")
+            uid = str(uuid.uuid4())
+            conn.execute(
+                "INSERT INTO users (id,username,email,password,role,created_at) VALUES (?,?,?,?,?,?)",
+                (uid, username, email, hash_password(password), role, datetime.now().isoformat())
+            )
+            # Auto-create passenger profile
+            pid = str(uuid.uuid4())
+            conn.execute(
+                "INSERT INTO passengers (id,user_id,name,email,tier,created_at) VALUES (?,?,?,?,?,?)",
+                (pid, uid, username, email, "Regular", datetime.now().isoformat())
+            )
+            return {"id": uid, "username": username, "email": email, "role": role, "passenger_id": pid}
+        except sqlite3.IntegrityError:
             raise ValueError("Username or email already exists.")
-        uid = str(uuid.uuid4())
-        conn.execute(
-            "INSERT INTO users (id,username,email,password,role,created_at) VALUES (?,?,?,?,?,?)",
-            (uid, username, email, hash_password(password), role, datetime.now().isoformat())
-        )
-        # Auto-create passenger profile
-        pid = str(uuid.uuid4())
-        conn.execute(
-            "INSERT INTO passengers (id,user_id,name,email,tier,created_at) VALUES (?,?,?,?,?,?)",
-            (pid, uid, username, email, "Regular", datetime.now().isoformat())
-        )
-        return {"id": uid, "username": username, "email": email, "role": role, "passenger_id": pid}
 
 
 def login_user(username: str, password: str) -> dict:
@@ -690,33 +696,36 @@ def join_waitlist(passenger_id: str, flight_id: str, pref_class: str = "Economy"
     if pref_class not in PRICES:
         raise ValueError(f"Invalid preferred class. Must be one of: {', '.join(PRICES.keys())}")
     with get_conn() as conn:
-        flight = conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone()
-        if not flight:
-            raise ValueError("Flight not found.")
+        try:
+            flight = conn.execute("SELECT id FROM flights WHERE id=?", (flight_id,)).fetchone()
+            if not flight:
+                raise ValueError("Flight not found.")
 
-        # Check not already in waitlist
-        if conn.execute(
-            "SELECT id FROM waitlist WHERE flight_id=? AND passenger_id=?",
-            (flight_id, passenger_id)
-        ).fetchone():
+            # Check not already in waitlist
+            if conn.execute(
+                "SELECT id FROM waitlist WHERE flight_id=? AND passenger_id=?",
+                (flight_id, passenger_id)
+            ).fetchone():
+                raise ValueError("Passenger already on waitlist for this flight.")
+            # Check no active booking
+            if conn.execute(
+                "SELECT id FROM bookings WHERE passenger_id=? AND flight_id=? AND status!='Cancelled'",
+                (passenger_id, flight_id)
+            ).fetchone():
+                raise ValueError("Passenger already has an active booking on this flight.")
+
+            pax = conn.execute("SELECT tier FROM passengers WHERE id=?", (passenger_id,)).fetchone()
+            if not pax:
+                raise ValueError("Passenger not found.")
+            priority = TIER_PRIORITY.get(pax["tier"], 0)
+            conn.execute(
+                "INSERT INTO waitlist (id,flight_id,passenger_id,pref_class,priority,added_at)"
+                " VALUES (?,?,?,?,?,?)",
+                (str(uuid.uuid4()), flight_id, passenger_id, pref_class, priority,
+                 datetime.now().isoformat())
+            )
+        except sqlite3.IntegrityError:
             raise ValueError("Passenger already on waitlist for this flight.")
-        # Check no active booking
-        if conn.execute(
-            "SELECT id FROM bookings WHERE passenger_id=? AND flight_id=? AND status!='Cancelled'",
-            (passenger_id, flight_id)
-        ).fetchone():
-            raise ValueError("Passenger already has an active booking on this flight.")
-
-        pax = conn.execute("SELECT tier FROM passengers WHERE id=?", (passenger_id,)).fetchone()
-        if not pax:
-            raise ValueError("Passenger not found.")
-        priority = TIER_PRIORITY.get(pax["tier"], 0)
-        conn.execute(
-            "INSERT INTO waitlist (id,flight_id,passenger_id,pref_class,priority,added_at)"
-            " VALUES (?,?,?,?,?,?)",
-            (str(uuid.uuid4()), flight_id, passenger_id, pref_class, priority,
-             datetime.now().isoformat())
-        )
 
 
 def get_waitlist(flight_id: str = None):
