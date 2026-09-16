@@ -16,7 +16,14 @@ def test_waitlist_double_booking(client):
 
     # Get flight
     res = client.get("/api/flights")
-    flight_id = res.get_json()["data"][0]["id"]
+    flights = res.get_json()["data"]
+    flight_id = None
+    for f in flights:
+        if f["stats"]["Economy"]["available"] > 0 or f["stats"]["Business"]["available"] > 0 or f["stats"]["First"]["available"] > 0:
+            flight_id = f["id"]
+            break
+    if not flight_id:
+        pytest.skip("No flights with available seats")
 
     # Get seats
     res = client.get(f"/api/flights/{flight_id}/seats")

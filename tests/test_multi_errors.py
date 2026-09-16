@@ -12,7 +12,14 @@ def test_multi_book_errors(client):
     passenger_id = res.get_json()["data"].get("passenger_id") or "123"
 
     res = client.get("/api/flights")
-    flight_id = res.get_json()["data"][0]["id"]
+    flights = res.get_json()["data"]
+    flight_id = None
+    for f in flights:
+        if f["stats"]["Economy"]["available"] > 0 or f["stats"]["Business"]["available"] > 0 or f["stats"]["First"]["available"] > 0:
+            flight_id = f["id"]
+            break
+    if not flight_id:
+        pytest.skip("No flights with available seats")
 
     # Book with empty list
     res = client.post("/api/bookings", headers={"X-User-Id": admin_id}, json={

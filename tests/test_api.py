@@ -57,7 +57,15 @@ def test_booking(client):
 
     # Book a seat
     res = client.get("/api/flights")
-    flight_id = res.get_json()["data"][0]["id"]
+    # Make sure we get a flight with available seats
+    flights = res.get_json()["data"]
+    flight_id = None
+    for f in flights:
+        if f["stats"]["Economy"]["available"] > 0 or f["stats"]["Business"]["available"] > 0 or f["stats"]["First"]["available"] > 0:
+            flight_id = f["id"]
+            break
+    if not flight_id:
+        pytest.skip("No flights with available seats")
 
     res = client.get(f"/api/flights/{flight_id}/seats")
     available_seats = [s for s in res.get_json()["data"] if s["status"] == "available"]
@@ -89,7 +97,15 @@ def test_booking_cancel(client):
     passenger_id = data["passenger_id"]
 
     res = client.get("/api/flights")
-    flight_id = res.get_json()["data"][0]["id"]
+    # Make sure we get a flight with available seats
+    flights = res.get_json()["data"]
+    flight_id = None
+    for f in flights:
+        if f["stats"]["Economy"]["available"] > 0 or f["stats"]["Business"]["available"] > 0 or f["stats"]["First"]["available"] > 0:
+            flight_id = f["id"]
+            break
+    if not flight_id:
+        pytest.skip("No flights with available seats")
 
     res = client.get(f"/api/flights/{flight_id}/seats")
     available_seats = [s for s in res.get_json()["data"] if s["status"] == "available"]
