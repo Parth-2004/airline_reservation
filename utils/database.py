@@ -16,20 +16,36 @@ DB_PATH = os.environ.get(
 )
 
 
+
+_test_mem_conn = None
+
 @contextmanager
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA foreign_keys=ON")
+    global _test_mem_conn
+    db_path = os.environ.get("DATABASE_PATH", DB_PATH)
+
+    if db_path == ":memory:":
+        if _test_mem_conn is None:
+            _test_mem_conn = sqlite3.connect(":memory:", check_same_thread=False)
+            _test_mem_conn.row_factory = sqlite3.Row
+            _test_mem_conn.execute("PRAGMA foreign_keys=ON")
+        conn = _test_mem_conn
+    else:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+
     try:
+
         yield conn
         conn.commit()
     except Exception:
         conn.rollback()
         raise
     finally:
-        conn.close()
+        if db_path != ":memory:":
+            conn.close()
 
 
 def hash_password(pw: str) -> str:
