@@ -16,6 +16,14 @@ def test_invalid_login(client):
     res = client.post("/api/auth/login", json={"username": "wrong", "password": "wrong"})
     assert res.status_code == 401
 
+def test_invalid_login_none(client):
+    res = client.post("/api/auth/login", json={"username": "wrong", "password": None})
+    assert res.status_code == 401
+
+def test_invalid_login_missing(client):
+    res = client.post("/api/auth/login", json={"username": "wrong"})
+    assert res.status_code == 401
+
 def test_invalid_register(client):
     username = f"testuser_{int(time.time())}"
     client.post("/api/auth/register", json={

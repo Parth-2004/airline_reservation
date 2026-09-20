@@ -315,6 +315,8 @@ def register_user(username: str, email: str, password: str, role: str = "user") 
 
 
 def login_user(username: str, password: str) -> dict:
+    if not password:
+        raise ValueError("Invalid credentials.")
     with get_conn() as conn:
         row = conn.execute(
             "SELECT * FROM users WHERE (username=? OR email=?)",
