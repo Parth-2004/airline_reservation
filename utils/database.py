@@ -212,15 +212,15 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
                departure_time: str, arrival_time: str,
                aircraft_model: str = "Boeing 737") -> dict:
     """Admin: add a new flight and auto-generate its seats."""
-    if not flight_id or not flight_id.strip():
+    if flight_id is None or not str(flight_id).strip():
         raise ValueError("Flight ID cannot be empty.")
-    if not origin or not origin.strip():
+    if origin is None or not str(origin).strip():
         raise ValueError("Origin cannot be empty.")
-    if not origin_full or not origin_full.strip():
+    if origin_full is None or not str(origin_full).strip():
         raise ValueError("Origin full name cannot be empty.")
-    if not destination or not destination.strip():
+    if destination is None or not str(destination).strip():
         raise ValueError("Destination cannot be empty.")
-    if not dest_full or not dest_full.strip():
+    if dest_full is None or not str(dest_full).strip():
         raise ValueError("Destination full name cannot be empty.")
 
     try:
@@ -283,15 +283,16 @@ def delete_flight(flight_id: str):
 # ─── Auth ─────────────────────────────────────────────────────────────────────
 
 def register_user(username: str, email: str, password: str, role: str = "user") -> dict:
-    if not username or not username.strip():
+    if username is None or not str(username).strip():
         raise ValueError("Username cannot be empty.")
-    if not email or not email.strip():
+    if email is None or not str(email).strip():
         raise ValueError("Email cannot be empty.")
-    if not password or not password.strip():
+    if password is None or not str(password).strip():
         raise ValueError("Password cannot be empty.")
 
-    username = username.strip()
-    email = email.strip()
+    username = str(username).strip()
+    email = str(email).strip()
+    password = str(password)
 
     with get_conn() as conn:
         conn.execute("BEGIN IMMEDIATE")
@@ -317,6 +318,9 @@ def register_user(username: str, email: str, password: str, role: str = "user") 
 def login_user(username: str, password: str) -> dict:
     if not password:
         raise ValueError("Invalid credentials.")
+
+    username = str(username) if username is not None else ""
+    password = str(password)
     with get_conn() as conn:
         row = conn.execute(
             "SELECT * FROM users WHERE (username=? OR email=?)",

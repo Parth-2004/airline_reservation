@@ -83,3 +83,48 @@ def test_invalid_register_trailing_spaces(client):
     })
     # This should fail because the username was stripped
     assert res2.status_code == 400
+
+def test_add_flight_int_input(client):
+    from utils.database import get_conn, hash_password
+    with get_conn() as conn:
+        conn.execute("INSERT OR IGNORE INTO users (id, username, email, password, role, created_at) VALUES ('testadmin', 'testadmin', 'testadmin@test.com', ?, 'admin', '2025-01-01')", (hash_password('admin123'),))
+
+    import time
+    resp = client.post("/api/admin/flights", json={
+        "_uid": "testadmin",
+        "flight_id": int(time.time()),
+        "origin": 456,
+        "origin_full": 789,
+        "destination": 101,
+        "dest_full": 112,
+        "departure_time": "2025-05-01T10:00:00",
+        "arrival_time": "2025-05-01T14:00:00"
+    })
+    # Assuming valid dates are provided, the strings should be stripped normally
+    assert resp.status_code == 201
+
+def test_register_int_input(client):
+    import time
+    username = int(time.time())
+    resp = client.post("/api/auth/register", json={
+        "username": username,
+        "email": f"{username}@test.com",
+        "password": 789101112
+    })
+    assert resp.status_code == 201
+
+def test_login_int_input(client):
+    import time
+    username = int(time.time())
+    client.post("/api/auth/register", json={
+        "username": username,
+        "email": f"{username}@test2.com",
+        "password": 789101112
+    })
+
+    # Try logging in with the user created above
+    resp = client.post("/api/auth/login", json={
+        "username": username,
+        "password": 789101112
+    })
+    assert resp.status_code == 200

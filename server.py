@@ -150,14 +150,14 @@ def api_add_flight():
     d = request.json or {}
     try:
         result = add_flight(
-            flight_id      = (d.get("flight_id") or "").strip().upper(),
-            origin         = (d.get("origin") or "").strip(),
-            origin_full    = (d.get("origin_full") or "").strip(),
-            destination    = (d.get("destination") or "").strip(),
-            dest_full      = (d.get("dest_full") or "").strip(),
-            departure_time = d.get("departure_time") or "",
-            arrival_time   = d.get("arrival_time") or "",
-            aircraft_model = d.get("aircraft_model") or "Boeing 737",
+            flight_id      = str(d.get("flight_id") or "").strip().upper(),
+            origin         = str(d.get("origin") or "").strip(),
+            origin_full    = str(d.get("origin_full") or "").strip(),
+            destination    = str(d.get("destination") or "").strip(),
+            dest_full      = str(d.get("dest_full") or "").strip(),
+            departure_time = str(d.get("departure_time") or ""),
+            arrival_time   = str(d.get("arrival_time") or ""),
+            aircraft_model = str(d.get("aircraft_model") or "Boeing 737"),
         )
         return ok(result), 201
     except ValueError as e:
