@@ -48,7 +48,7 @@ def err(msg, code=400):
 def require_login(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+        uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
         if not uid:
             return err("Not authenticated.", 401)
         with get_conn() as conn:
@@ -61,7 +61,7 @@ def require_login(f):
 def require_admin(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+        uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
         if not uid:
             return err("Not authenticated.", 401)
         with get_conn() as conn:
@@ -89,7 +89,7 @@ def serve_admin():
 
 @app.route("/api/auth/register", methods=["POST"])
 def api_register():
-    d = request.json or {}
+    d = request.json if isinstance(request.json, dict) else {}
     try:
         user = register_user(d.get("username",""), d.get("email",""), d.get("password",""))
         return ok(user), 201
@@ -98,7 +98,7 @@ def api_register():
 
 @app.route("/api/auth/login", methods=["POST"])
 def api_login():
-    d = request.json or {}
+    d = request.json if isinstance(request.json, dict) else {}
     try:
         user = login_user(d.get("username",""), d.get("password",""))
         return ok(user)
@@ -147,7 +147,7 @@ def api_aircraft_models():
 @app.route("/api/admin/flights", methods=["POST"])
 @require_admin
 def api_add_flight():
-    d = request.json or {}
+    d = request.json if isinstance(request.json, dict) else {}
     try:
         result = add_flight(
             flight_id      = str(d.get("flight_id") or "").strip().upper(),
@@ -182,7 +182,7 @@ def api_passengers():
 @app.route("/api/passengers/<pid>/tier", methods=["PUT"])
 @require_admin
 def api_update_tier(pid):
-    d = request.json or {}
+    d = request.json if isinstance(request.json, dict) else {}
     try:
         update_passenger_tier(pid, d.get("tier","Regular"))
         return ok({"passenger_id": pid})
@@ -244,7 +244,7 @@ def api_seats(fid):
 @app.route("/api/bookings", methods=["GET"])
 @require_login
 def api_bookings():
-    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
 
     with get_conn() as conn:
@@ -272,9 +272,9 @@ def api_bookings():
 @app.route("/api/bookings", methods=["POST"])
 @require_login
 def api_book():
-    d = request.json or {}
+    d = request.json if isinstance(request.json, dict) else {}
     try:
-        uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+        uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
         pax = get_passenger_by_user(uid)
 
         with get_conn() as conn:
@@ -303,7 +303,7 @@ def api_book():
 @app.route("/api/bookings/<bid>/cancel", methods=["POST"])
 @require_login
 def api_cancel(bid):
-    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
 
     with get_conn() as conn:
@@ -329,7 +329,7 @@ def api_cancel(bid):
 @app.route("/api/bookings/<bid>/upgrade", methods=["POST"])
 @require_login
 def api_upgrade(bid):
-    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
 
     with get_conn() as conn:
@@ -346,7 +346,7 @@ def api_upgrade(bid):
         if not is_admin and b["passenger_id"] != pax["id"]:
             return err("Not authorized to upgrade this booking.", 403)
 
-    d = request.json or {}
+    d = request.json if isinstance(request.json, dict) else {}
     try:
         result = upgrade_booking(bid, d["seat_id"])
         return ok(result)
@@ -359,7 +359,7 @@ def api_upgrade(bid):
 @require_login
 def api_waitlist():
     # Only return waitlist for current user
-    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
     if not pax:
         return err("Passenger profile not found.", 403)
@@ -373,14 +373,14 @@ def api_waitlist():
 @app.route("/api/waitlist", methods=["POST"])
 @require_login
 def api_join_waitlist():
-    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
 
     with get_conn() as conn:
         user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
         is_admin = user and user["role"] == "admin"
 
-    d = request.json or {}
+    d = request.json if isinstance(request.json, dict) else {}
     pid = d.get("passenger_id")
 
     if not is_admin and (not pax or pax["id"] != pid):
@@ -395,7 +395,7 @@ def api_join_waitlist():
 @app.route("/api/waitlist/<wid>", methods=["DELETE"])
 @require_login
 def api_remove_waitlist(wid):
-    uid = request.headers.get("X-User-Id") or (request.is_json and request.json and request.json.get("_uid"))
+    uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
     pax = get_passenger_by_user(uid)
 
     with get_conn() as conn:
