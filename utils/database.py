@@ -223,6 +223,9 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
     if dest_full is None or not str(dest_full).strip():
         raise ValueError("Destination full name cannot be empty.")
 
+    if aircraft_model not in AIRCRAFT_LAYOUTS:
+        raise ValueError(f"Invalid aircraft model: {aircraft_model}")
+
     try:
         dt_dep = datetime.fromisoformat(departure_time)
         dt_arr = datetime.fromisoformat(arrival_time)
@@ -245,7 +248,7 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
              departure_time, arrival_time, aircraft_model, "Scheduled")
         )
 
-        layout = AIRCRAFT_LAYOUTS.get(aircraft_model, AIRCRAFT_LAYOUTS["Boeing 737"])
+        layout = AIRCRAFT_LAYOUTS[aircraft_model]
         row_idx = 0
         seat_count = 0
         for seg in layout:
