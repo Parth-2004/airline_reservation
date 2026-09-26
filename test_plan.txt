@@ -1,0 +1,2 @@
+1. Implement Profile settings page in User dashboard (`static/index.html`).
+2. Implement Profile settings backend API in `server.py` and `utils/database.py`.

@@ -10,7 +10,7 @@ from flask import Flask, request, jsonify, send_from_directory, session
 from utils.database import (
     init_db, get_conn,
     register_user, login_user, get_all_users, get_passenger_by_user,
-    get_all_passengers, update_passenger_tier,
+    get_all_passengers, update_passenger_tier, update_passenger_profile,
     get_all_flights, get_flight, get_seats, get_seat_map, get_flight_stats, get_all_flight_stats,
     add_flight, delete_flight, AIRCRAFT_LAYOUTS,
     book_seat, book_multiple_seats, get_bookings, cancel_booking, upgrade_booking,
@@ -185,6 +185,28 @@ def api_update_tier(pid):
     d = request.json if isinstance(request.json, dict) else {}
     try:
         update_passenger_tier(pid, d.get("tier","Regular"))
+        return ok({"passenger_id": pid})
+    except ValueError as e:
+        if str(e) == "Passenger not found.":
+            return err(e, 404)
+        return err(e)
+
+@app.route("/api/passengers/<pid>/profile", methods=["PUT"])
+@require_login
+def api_update_profile(pid):
+    uid = request.headers.get("X-User-Id") or (request.is_json and isinstance(request.json, dict) and request.json.get("_uid"))
+    pax = get_passenger_by_user(uid)
+
+    with get_conn() as conn:
+        user = conn.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+        is_admin = user and user["role"] == "admin"
+
+    if not is_admin and (not pax or pax["id"] != pid):
+        return err("Not authorized to update this profile.", 403)
+
+    d = request.json if isinstance(request.json, dict) else {}
+    try:
+        update_passenger_profile(pid, d.get("name"), d.get("email"))
         return ok({"passenger_id": pid})
     except ValueError as e:
         if str(e) == "Passenger not found.":

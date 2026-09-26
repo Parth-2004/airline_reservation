@@ -385,6 +385,30 @@ def get_all_passengers():
         ).fetchall()]
 
 
+def update_passenger_profile(passenger_id: str, name: str, email: str):
+    name = str(name).strip() if name else ""
+    email = str(email).strip() if email else ""
+
+    if not name:
+        raise ValueError("Name cannot be empty.")
+    if not email:
+        raise ValueError("Email cannot be empty.")
+
+    with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        pax = conn.execute("SELECT id, user_id FROM passengers WHERE id=?", (passenger_id,)).fetchone()
+        if not pax:
+            raise ValueError("Passenger not found.")
+
+        # Check if email is already taken by another user
+        existing = conn.execute("SELECT id FROM users WHERE email=? AND id!=?", (email, pax["user_id"])).fetchone()
+        if existing:
+            raise ValueError("Email already in use.")
+
+        conn.execute("UPDATE passengers SET name=?, email=? WHERE id=?", (name, email, passenger_id))
+        if pax["user_id"]:
+            conn.execute("UPDATE users SET email=? WHERE id=?", (email, pax["user_id"]))
+
 def update_passenger_tier(passenger_id: str, tier: str):
     if tier not in TIER_PRIORITY:
         raise ValueError(f"Invalid tier. Must be one of: {', '.join(TIER_PRIORITY.keys())}")

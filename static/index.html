@@ -225,6 +225,9 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
   <div class="nav" data-s="reports">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports
   </div>
+  <div class="nav" data-s="profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"/></svg>Profile
+  </div>
 
   <div class="sb-footer">
     <div><span class="online"></span><span style="font-family:var(--M);font-size:10px;color:var(--muted)">SYSTEM ONLINE</span></div>
@@ -358,6 +361,27 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
     </div>
   </section>
 
+  <!-- PROFILE -->
+  <section id="s-profile" class="section">
+    <div class="ph"><h1><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"/></svg>Profile Settings</h1><p>Update your personal information</p><div class="aline"></div></div>
+    <div class="card" style="max-width:400px">
+      <div class="ct">Personal Details</div>
+      <div class="fg">
+        <label class="fl">Full Name</label>
+        <input type="text" class="fc" id="prof-name" placeholder="Your name">
+      </div>
+      <div class="fg">
+        <label class="fl">Email Address</label>
+        <input type="email" class="fc" id="prof-email" placeholder="Your email">
+      </div>
+      <div class="fg">
+        <label class="fl">Membership Tier</label>
+        <input type="text" class="fc" id="prof-tier" readonly disabled style="color:var(--muted)">
+      </div>
+      <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="updateProfile()">Save Changes</button>
+    </div>
+  </section>
+
   <!-- REPORTS — occupancy only, no revenue for regular users -->
   <section id="s-reports" class="section">
     <div class="ph"><h1><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports</h1><p>Flight occupancy overview</p><div class="aline"></div></div>
@@ -432,8 +456,43 @@ document.querySelectorAll('.nav').forEach(n => {
     if (s === 'bookings')  { loadFlightFilterBookings(); loadBookings(); }
     if (s === 'waitlist')  { loadWaitlistFlightSelect(); loadWaitlistView(); }
     if (s === 'reports')   loadReports();
+    if (s === 'profile')   loadProfile();
   });
 });
+
+// ── Profile ────────────────────────────────────────────────
+function loadProfile() {
+  document.getElementById('prof-name').value = U.username || '';
+  document.getElementById('prof-email').value = U.email || '';
+  document.getElementById('prof-tier').value = U.tier || 'Regular';
+}
+
+async function updateProfile() {
+  const name = document.getElementById('prof-name').value;
+  const email = document.getElementById('prof-email').value;
+
+  if (!name || !email) {
+    toast('Name and email are required.', 'err');
+    return;
+  }
+
+  const j = await api(`/api/passengers/${U.passenger_id}/profile`, {
+    method: 'PUT',
+    body: JSON.stringify({ name, email })
+  });
+
+  if (!j.ok) {
+    toast(j.error, 'err');
+    return;
+  }
+
+  U.username = name;
+  U.email = email;
+  localStorage.setItem('airbook_user', JSON.stringify(U));
+  document.getElementById('sb-av').textContent = U.username[0].toUpperCase();
+  document.getElementById('sb-name').textContent = U.username;
+  toast('Profile updated successfully.');
+}
 
 // ── Helpers ────────────────────────────────────────────────
 function fmt(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
