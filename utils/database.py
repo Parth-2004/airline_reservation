@@ -37,12 +37,8 @@ def get_conn():
         conn.execute("PRAGMA foreign_keys=ON")
 
     try:
-
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
+        with conn:
+            yield conn
     finally:
         if db_path != ":memory:":
             conn.close()
