@@ -33,3 +33,7 @@ jobs:
       - name: Verify Flask application
         run: |
           python -c "from server import app; print('Flask application loaded successfully')"
+
+      - name: Run test suite
+        run: |
+          PYTHONPATH=. python -m pytest tests/
