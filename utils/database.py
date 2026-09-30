@@ -396,9 +396,15 @@ def update_passenger_profile(passenger_id: str, name: str, email: str):
         if not pax:
             raise ValueError("Passenger not found.")
 
-        # Check if email is already taken by another user
-        existing = conn.execute("SELECT id FROM users WHERE email=? AND id!=?", (email, pax["user_id"])).fetchone()
-        if existing:
+        # Check if email is already taken by another user or passenger
+        if pax["user_id"]:
+            existing_user = conn.execute("SELECT id FROM users WHERE email=? AND id!=?", (email, pax["user_id"])).fetchone()
+        else:
+            existing_user = conn.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()
+
+        existing_pax = conn.execute("SELECT id FROM passengers WHERE email=? AND id!=?", (email, passenger_id)).fetchone()
+
+        if existing_user or existing_pax:
             raise ValueError("Email already in use.")
 
         conn.execute("UPDATE passengers SET name=?, email=? WHERE id=?", (name, email, passenger_id))
