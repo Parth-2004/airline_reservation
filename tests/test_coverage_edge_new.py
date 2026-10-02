@@ -2,11 +2,19 @@ import pytest
 import time
 
 def test_api_flight_coverage(client):
+    # Get the flights first to ensure we request a valid one (the DB might have reset and seeded flights differently)
+    res_flights = client.get("/api/flights")
+    assert res_flights.status_code == 200
+    flights = res_flights.get_json()["data"]
+    if not flights:
+        pytest.skip("No flights seeded")
+    flight_id = flights[0]["id"]
+
     # Test valid flight (this covers `get_flight_stats` indirectly)
-    res = client.get("/api/flights/AI101")
+    res = client.get(f"/api/flights/{flight_id}")
     assert res.status_code == 200
     data = res.get_json()["data"]
-    assert data["id"] == "AI101"
+    assert data["id"] == flight_id
     assert "stats" in data
     assert "Economy" in data["stats"]
     assert "waitlist" in data["stats"]

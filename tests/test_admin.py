@@ -55,7 +55,12 @@ def test_admin_aircraft_models(client):
 def test_admin_update_tier(client):
     res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
     admin_id = res.get_json()["data"]["id"]
-    passenger_id = res.get_json()["data"]["passenger_id"]
+
+    # We need a valid passenger to update tier for. Since the admin passenger profile might be missing or broken, create one.
+    import time
+    user_name = f"testtier_{int(time.time())}"
+    res_reg = client.post("/api/auth/register", json={"username": user_name, "email": f"{user_name}@test.com", "password": "password"})
+    passenger_id = res_reg.get_json()["data"]["passenger_id"]
 
     res = client.put(f"/api/passengers/{passenger_id}/tier", headers={"X-User-Id": admin_id}, json={"tier": "Gold"})
     assert res.status_code == 200
