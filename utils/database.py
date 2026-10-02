@@ -670,11 +670,6 @@ def _process_waitlist(conn, flight_id: str, freed_class: str):
             "SELECT * FROM seats WHERE flight_id=? AND seat_class=? AND status='available' LIMIT 1",
             (flight_id, wl_entry["pref_class"])
         ).fetchone()
-        if not avail:
-            avail = conn.execute(
-                "SELECT * FROM seats WHERE flight_id=? AND seat_class=? AND status='available' LIMIT 1",
-                (flight_id, freed_class)
-            ).fetchone()
 
         if avail:
             bid = f"BK{str(uuid.uuid4())[:6].upper()}"
