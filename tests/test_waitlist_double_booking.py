@@ -2,6 +2,11 @@ import pytest
 import time
 
 def test_waitlist_double_booking(client):
+    from utils.database import get_conn
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='available' WHERE status='booked'")
+        conn.execute("DELETE FROM waitlist")
+
     # Register user1 and join waitlist
     u1 = f"u1_{int(time.time())}"
     res = client.post("/api/auth/register", json={"username": u1, "email": f"{u1}@test.com", "password": "pw"})
@@ -34,6 +39,11 @@ def test_waitlist_double_booking(client):
     seat_2 = avail_seats[1]["id"]
 
     # User 1 joins waitlist (allowed because they have no booking)
+    from utils.database import get_conn
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='booked' WHERE flight_id=? AND seat_class='Economy'", (flight_id,))
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='booked' WHERE flight_id=? AND seat_class='Economy'", (flight_id,))
     res = client.post("/api/waitlist", headers={"X-User-Id": u1_id}, json={
         "passenger_id": u1_pax,
         "flight_id": flight_id,
@@ -41,6 +51,8 @@ def test_waitlist_double_booking(client):
     })
     assert res.status_code == 201
 
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='available' WHERE id IN (?, ?)", (seat_1, seat_2))
     # User 1 manually books seat_1 (allowed because book_seat doesn't check if already booked or on waitlist)
     res = client.post("/api/bookings", headers={"X-User-Id": u1_id}, json={
         "passenger_id": u1_pax,

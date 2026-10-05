@@ -15,6 +15,9 @@ def test_waitlist(client):
     flight_id = res.get_json()["data"][0]["id"]
 
     # Join waitlist
+    from utils.database import get_conn
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='booked' WHERE flight_id=? AND seat_class='Economy'", (flight_id,))
     res = client.post("/api/waitlist", headers={"X-User-Id": user_id}, json={
         "passenger_id": passenger_id,
         "flight_id": flight_id,
@@ -34,6 +37,10 @@ def test_waitlist(client):
     assert res.status_code == 200
 
 def test_upgrade(client):
+    from utils.database import get_conn
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='available' WHERE status='booked'")
+        conn.execute("DELETE FROM waitlist")
     username = f"testupgrade_{int(time.time())}"
     res = client.post("/api/auth/register", json={
         "username": username,
@@ -50,8 +57,10 @@ def test_upgrade(client):
     available_seats = [s for s in res.get_json()["data"] if s["status"] == "available"]
 
     if len(available_seats) >= 2:
-        seat_id = available_seats[0]["id"]
-        upgrade_seat_id = available_seats[1]["id"]
+        econ_seats = [s for s in available_seats if s["seat_class"] == "Economy"]
+        bus_seats = [s for s in available_seats if s["seat_class"] == "Business"]
+        seat_id = econ_seats[0]["id"]
+        upgrade_seat_id = bus_seats[0]["id"]
 
         # Book seat
         res = client.post("/api/bookings", headers={"X-User-Id": user_id}, json={
@@ -72,6 +81,10 @@ def test_upgrade(client):
         passenger_id2 = res2.get_json()["data"]["passenger_id"]
 
         # Join waitlist
+        from utils.database import get_conn
+        with get_conn() as conn:
+            conn.execute("UPDATE seats SET status='booked' WHERE flight_id=? AND seat_class='Economy' AND id != ?", (flight_id, seat_id))
+            conn.execute("UPDATE seats SET status='available' WHERE id=?", (upgrade_seat_id,))
         res = client.post("/api/waitlist", headers={"X-User-Id": user_id2}, json={
             "passenger_id": passenger_id2,
             "flight_id": flight_id,

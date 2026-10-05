@@ -779,6 +779,15 @@ def join_waitlist(passenger_id: str, flight_id: str, pref_class: str = "Economy"
         pax = conn.execute("SELECT tier FROM passengers WHERE id=?", (passenger_id,)).fetchone()
         if not pax:
             raise ValueError("Passenger not found.")
+
+        # Ensure there are no available seats in the preferred class before joining waitlist
+        avail = conn.execute(
+            "SELECT COUNT(*) FROM seats WHERE flight_id=? AND seat_class=? AND status='available'",
+            (flight_id, pref_class)
+        ).fetchone()[0]
+        if avail > 0:
+            raise ValueError(f"Seats are currently available in {pref_class} class. Please book a seat directly.")
+
         priority = TIER_PRIORITY.get(pax["tier"], 0)
         conn.execute(
             "INSERT INTO waitlist (id,flight_id,passenger_id,pref_class,priority,added_at)"

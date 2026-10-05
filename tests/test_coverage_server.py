@@ -55,7 +55,11 @@ def data():
     b2_id = b2["bookings"][0]["id"]
 
     # Put user 2 on waitlist for f2
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='booked' WHERE flight_id=? AND seat_class='Economy'", (f2,))
     join_waitlist(p2_id, f2, "Economy")
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='available' WHERE flight_id=? AND seat_class='Economy'", (f2,))
     with get_conn() as conn:
         w2_id = conn.execute("SELECT id FROM waitlist WHERE passenger_id=? AND flight_id=?", (p2_id,f2)).fetchone()["id"]
 

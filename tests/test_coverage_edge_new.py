@@ -308,12 +308,19 @@ def test_api_waitlist_admin_remove_other(client):
     from utils.database import add_flight, join_waitlist
     add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
 
+    from utils.database import get_conn
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='booked' WHERE flight_id=? AND seat_class='Economy'", (f_id,))
+
     join_waitlist(user1["passenger_id"], f_id)
     with get_conn() as conn:
         w_id = conn.execute("SELECT id FROM waitlist WHERE flight_id=? AND passenger_id=?", (f_id, user1["passenger_id"])).fetchone()["id"]
 
     res = client.delete(f"/api/waitlist/{w_id}", headers={"X-User-Id": admin["id"]})
     assert res.status_code == 200
+
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='available' WHERE flight_id=? AND seat_class='Economy'", (f_id,))
 
 def test_api_bookings_admin_can_view(client):
     from utils.database import get_conn, register_user
