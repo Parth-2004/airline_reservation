@@ -17,6 +17,9 @@ def test_waitlist_priority_update(client):
     flight_id = res.get_json()["data"][0]["id"]
 
     # Join waitlist
+    from utils.database import get_conn
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='booked' WHERE flight_id=? AND seat_class='Economy'", (flight_id,))
     res = client.post("/api/waitlist", headers={"X-User-Id": user_id}, json={
         "passenger_id": passenger_id,
         "flight_id": flight_id,

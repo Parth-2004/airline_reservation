@@ -2,6 +2,10 @@ import pytest
 import time
 
 def test_waitlist_class_logic(client):
+    from utils.database import get_conn
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='available' WHERE status='booked'")
+        conn.execute("DELETE FROM waitlist")
     username = f"testwaitlist_{int(time.time())}"
     res = client.post("/api/auth/register", json={
         "username": username,
@@ -18,18 +22,13 @@ def test_waitlist_class_logic(client):
     res = client.get(f"/api/flights/{flight_id}/seats")
     available_seats = [s for s in res.get_json()["data"] if s["status"] == "available"]
 
-    first_class_seats = [s for s in available_seats if s["seat_class"] == "First"]
+    from utils.database import get_conn
+    with get_conn() as conn:
+        conn.execute("UPDATE seats SET status='booked' WHERE flight_id=? AND seat_class='First'", (flight_id,))
 
     res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
     admin_id = res.get_json()["data"]["id"]
     admin_pax = res.get_json()["data"]["passenger_id"]
-
-    for seat in first_class_seats:
-        client.post("/api/bookings", headers={"X-User-Id": admin_id}, json={
-            "passenger_id": admin_pax,
-            "flight_id": flight_id,
-            "seat_id": seat["id"]
-        })
 
     # User joins waitlist for First class
     res = client.post("/api/waitlist", headers={"X-User-Id": user_id}, json={
@@ -54,5 +53,9 @@ def test_waitlist_class_logic(client):
     cancel_data = res.get_json()["data"]
 
     # It should not have auto-assigned the First-class waitlist user to the Economy seat.
-    if "auto_assigned" in cancel_data and cancel_data["auto_assigned"] is not None:
-        assert cancel_data["auto_assigned"]["passenger"] != username
+    try:
+        if "auto_assigned" in cancel_data and cancel_data["auto_assigned"] is not None:
+            assert cancel_data["auto_assigned"]["passenger"] != username
+    finally:
+        with get_conn() as conn:
+            conn.execute("UPDATE seats SET status='available' WHERE flight_id=? AND seat_class='First'", (flight_id,))
