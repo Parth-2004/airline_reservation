@@ -58,7 +58,7 @@ def test_admin_update_tier(client):
 
     # We need a valid passenger to update tier for. Since the admin passenger profile might be missing or broken, create one.
     import time
-    user_name = f"testtier_{int(time.time())}"
+    user_name = f"testtier_{time.time_ns()}"
     res_reg = client.post("/api/auth/register", json={"username": user_name, "email": f"{user_name}@test.com", "password": "password"})
     passenger_id = res_reg.get_json()["data"]["passenger_id"]
 

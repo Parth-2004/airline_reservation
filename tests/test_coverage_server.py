@@ -12,7 +12,7 @@ def client():
 
 @pytest.fixture
 def data():
-    ts = int(time.time() * 1000)
+    ts = time.time_ns()
 
     # 1. Normal user with a passenger profile
     u1_data = register_user(f"u1_{ts}", f"u1_{ts}@test.com", "pass")

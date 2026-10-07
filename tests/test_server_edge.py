@@ -18,7 +18,7 @@ def test_require_admin_invalid(client):
 
 def test_require_admin_not_admin(client):
     # Register regular user
-    username = f"testuser_{int(time.time())}"
+    username = f"testuser_{time.time_ns()}"
     client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",

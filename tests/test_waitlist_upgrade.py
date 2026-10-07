@@ -2,7 +2,7 @@ import pytest
 import time
 
 def test_waitlist(client):
-    username = f"testwaitlist_{int(time.time())}"
+    username = f"testwaitlist_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
@@ -34,7 +34,7 @@ def test_waitlist(client):
     assert res.status_code == 200
 
 def test_upgrade(client):
-    username = f"testupgrade_{int(time.time())}"
+    username = f"testupgrade_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
@@ -62,7 +62,7 @@ def test_upgrade(client):
         booking_id = res.get_json()["data"]["id"]
 
         # Create second user to join waitlist for old seat class
-        username2 = f"testwaitlist2_{int(time.time())}"
+        username2 = f"testwaitlist2_{time.time_ns()}"
         res2 = client.post("/api/auth/register", json={
             "username": username2,
             "email": f"{username2}@example.com",

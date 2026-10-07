@@ -3,13 +3,13 @@ import time
 
 def test_waitlist_double_booking(client):
     # Register user1 and join waitlist
-    u1 = f"u1_{int(time.time())}"
+    u1 = f"u1_{time.time_ns()}"
     res = client.post("/api/auth/register", json={"username": u1, "email": f"{u1}@test.com", "password": "pw"})
     u1_id = res.get_json()["data"]["id"]
     u1_pax = res.get_json()["data"]["passenger_id"]
 
     # Register user2 and book a seat
-    u2 = f"u2_{int(time.time())}"
+    u2 = f"u2_{time.time_ns()}"
     res = client.post("/api/auth/register", json={"username": u2, "email": f"{u2}@test.com", "password": "pw"})
     u2_id = res.get_json()["data"]["id"]
     u2_pax = res.get_json()["data"]["passenger_id"]

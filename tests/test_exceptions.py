@@ -25,7 +25,7 @@ def test_invalid_login_missing(client):
     assert res.status_code == 401
 
 def test_invalid_register(client):
-    username = f"testuser_{int(time.time())}"
+    username = f"testuser_{time.time_ns()}"
     client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
@@ -48,7 +48,7 @@ def test_missing_flight_seats(client):
     assert res.status_code == 404
 
 def test_booking_key_error(client):
-    username = f"testbooker_keyerr_{int(time.time())}"
+    username = f"testbooker_keyerr_{time.time_ns()}"
     client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
@@ -68,7 +68,7 @@ def test_booking_key_error(client):
     assert "passenger_id" in res.get_json()["error"]
 
 def test_invalid_register_trailing_spaces(client):
-    username = f"testuser_spaces_{int(time.time())}"
+    username = f"testuser_spaces_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": f" {username} ",
         "email": f" {username}@example.com ",
@@ -92,7 +92,7 @@ def test_add_flight_int_input(client):
     import time
     resp = client.post("/api/admin/flights", json={
         "_uid": "testadmin",
-        "flight_id": int(time.time()),
+        "flight_id": time.time_ns(),
         "origin": 456,
         "origin_full": 789,
         "destination": 101,
@@ -105,7 +105,7 @@ def test_add_flight_int_input(client):
 
 def test_register_int_input(client):
     import time
-    username = int(time.time())
+    username = time.time_ns()
     resp = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@test.com",
@@ -115,7 +115,7 @@ def test_register_int_input(client):
 
 def test_login_int_input(client):
     import time
-    username = int(time.time())
+    username = time.time_ns()
     client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@test2.com",
