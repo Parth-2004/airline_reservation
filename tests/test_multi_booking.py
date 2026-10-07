@@ -2,7 +2,7 @@ import pytest
 import time
 
 def test_book_multiple_seats(client):
-    username = f"testmultibook_{int(time.time())}"
+    username = f"testmultibook_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",

@@ -2,7 +2,7 @@ import pytest
 import time
 
 def test_waitlist_class_logic(client):
-    username = f"testwaitlist_{int(time.time())}"
+    username = f"testwaitlist_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",

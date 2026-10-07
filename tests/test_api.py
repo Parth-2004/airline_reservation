@@ -10,7 +10,7 @@ def test_get_flights(client):
     assert len(data["data"]) > 0
 
 def test_register_and_login(client):
-    username = f"testuser_{int(time.time())}"
+    username = f"testuser_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
@@ -45,7 +45,7 @@ def test_get_flight_seatmap(client):
     assert len(data["data"]) > 0
 
 def test_booking(client):
-    username = f"testbooker_{int(time.time())}"
+    username = f"testbooker_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
@@ -86,7 +86,7 @@ def test_booking(client):
     assert bookings[0]["seat_id"] == seat_id
 
 def test_booking_cancel(client):
-    username = f"testcancel_{int(time.time())}"
+    username = f"testcancel_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",

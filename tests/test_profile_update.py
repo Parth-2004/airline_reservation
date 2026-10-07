@@ -3,7 +3,7 @@ import time
 from utils.database import get_conn, register_user
 
 def test_update_profile(client):
-    username = f"testprofile_{int(time.time())}"
+    username = f"testprofile_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@test.com",
@@ -33,10 +33,10 @@ def test_update_profile(client):
         assert user["email"] == new_email
 
 def test_update_profile_email_taken(client):
-    u1 = f"u1_{int(time.time())}"
+    u1 = f"u1_{time.time_ns()}"
     client.post("/api/auth/register", json={"username": u1, "email": f"{u1}@test.com", "password": "pwd"})
 
-    u2 = f"u2_{int(time.time())}"
+    u2 = f"u2_{time.time_ns()}"
     res = client.post("/api/auth/register", json={"username": u2, "email": f"{u2}@test.com", "password": "pwd"})
     u2_id = res.get_json()["data"]["id"]
     u2_pid = res.get_json()["data"]["passenger_id"]

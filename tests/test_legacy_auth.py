@@ -6,7 +6,7 @@ from datetime import datetime
 from utils.database import get_conn
 
 def test_legacy_auth_upgrade(client):
-    username = f"legacyuser_{int(time.time())}"
+    username = f"legacyuser_{time.time_ns()}"
     email = f"{username}@example.com"
     password = "legacypassword123"
     legacy_hash = hashlib.sha256(password.encode()).hexdigest()

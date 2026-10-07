@@ -408,3 +408,217 @@ def test_database_book_multiple_seats_seat_unavailable(client):
     import pytest
     with pytest.raises(ValueError, match="is no longer available"):
         book_multiple_seats(data["passenger_id"], f_id, [seat["id"]])
+
+def test_cancel_booking_not_found(client):
+    from utils.database import cancel_booking
+    import pytest
+    with pytest.raises(ValueError, match="Booking not found or already cancelled."):
+        cancel_booking("NONEXISTENT_BOOKING")
+
+def test_add_flight_duplicate(client):
+    from utils.database import add_flight
+    import pytest
+    with pytest.raises(ValueError, match="already exists"):
+        add_flight("DUP_FLIGHT", "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+        add_flight("DUP_FLIGHT", "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+
+def test_delete_flight_not_found(client):
+    from utils.database import delete_flight
+    import pytest
+    with pytest.raises(ValueError, match="Flight not found."):
+        delete_flight("NONEXISTENT_DEL_FLIGHT")
+
+def test_join_waitlist_passenger_not_found(client):
+    from utils.database import join_waitlist, add_flight
+    import pytest
+    import time
+    ts = time.time_ns()
+    fid = f"F_{ts}"
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    with pytest.raises(ValueError, match="Passenger not found."):
+        join_waitlist("NONEXISTENT_PAX", fid, "Economy")
+
+def test_upgrade_booking_not_found_db(client):
+    from utils.database import upgrade_booking
+    import pytest
+    with pytest.raises(ValueError, match="Booking not found."):
+        upgrade_booking("NONEXISTENT", "SOME_SEAT")
+
+def test_upgrade_seat_not_on_same_flight(client):
+    from utils.database import upgrade_booking, add_flight, book_seat, get_seats, register_user
+    import pytest
+    import time
+    ts = time.time_ns()
+
+    fid1 = f"F1_{ts}"
+    fid2 = f"F2_{ts}"
+
+    add_flight(fid1, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    add_flight(fid2, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+
+    u = register_user(f"u_upg_{ts}", f"u_upg_{ts}@example.com", "pass")
+
+    seats1 = get_seats(fid1)
+    seat1 = seats1[0]["id"]
+
+    seats2 = get_seats(fid2)
+    seat2 = seats2[0]["id"]
+
+    booking = book_seat(u["passenger_id"], fid1, seat1)
+
+    with pytest.raises(ValueError, match="Upgrade seat must be on the same flight."):
+        upgrade_booking(booking["id"], seat2)
+
+def test_login_invalid_legacy_hash(client):
+    from utils.database import get_conn, hash_password
+    import sqlite3
+
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO users (id, username, email, password, role, created_at) VALUES ('legacy_invalid_test', 'legacy_invalid', 'legacy_invalid@example.com', '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'user', '2025-01-01')"
+        )
+
+    res = client.post("/api/auth/login", json={"username": "legacy_invalid", "password": "wrong_password"})
+    assert res.status_code == 401
+
+    with get_conn() as conn:
+        conn.execute("DELETE FROM users WHERE id='legacy_invalid_test'")
+
+def test_waitlist_already_on_waitlist(client):
+    from utils.database import join_waitlist, add_flight, register_user
+    import pytest
+    import time
+    ts = time.time_ns()
+
+    fid = f"FW1_{ts}"
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+
+    u = register_user(f"u_wl1_{ts}", f"u_wl1_{ts}@example.com", "pass")
+    join_waitlist(u["passenger_id"], fid, "Economy")
+
+    with pytest.raises(ValueError, match="Passenger already on waitlist for this flight."):
+        join_waitlist(u["passenger_id"], fid, "Economy")
+
+def test_waitlist_already_booked(client):
+    from utils.database import join_waitlist, add_flight, register_user, book_seat, get_seats
+    import pytest
+    import time
+    ts = time.time_ns()
+
+    fid = f"FW2_{ts}"
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+
+    u = register_user(f"u_wl2_{ts}", f"u_wl2_{ts}@example.com", "pass")
+    seats = get_seats(fid)
+    book_seat(u["passenger_id"], fid, seats[0]["id"])
+
+    with pytest.raises(ValueError, match="Passenger already has an active booking on this flight."):
+        join_waitlist(u["passenger_id"], fid, "Economy")
+
+def test_get_all_users_with_conn(client):
+    from utils.database import get_all_users, get_conn
+    with get_conn() as conn:
+        users = get_all_users(conn)
+        assert len(users) > 0
+
+def test_update_profile_empty_email(client):
+    from utils.database import update_passenger_profile
+    import pytest
+    with pytest.raises(ValueError, match="Email cannot be empty."):
+        update_passenger_profile("p_id", "valid name", "")
+
+def test_update_profile_empty_name(client):
+    from utils.database import update_passenger_profile
+    import pytest
+    with pytest.raises(ValueError, match="Name cannot be empty."):
+        update_passenger_profile("p_id", "", "valid@example.com")
+
+def test_book_multiple_seats_empty_list_db(client):
+    from utils.database import book_multiple_seats
+    import pytest
+    with pytest.raises(ValueError, match="No seats selected."):
+        book_multiple_seats("p_id", "f_id", [])
+
+def test_get_bookings_filters(client):
+    from utils.database import get_bookings, book_seat, get_seats, add_flight, register_user
+    import time
+    ts = time.time_ns()
+
+    fid = f"FB_{ts}"
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+
+    u = register_user(f"u_b_{ts}", f"u_b_{ts}@example.com", "pass")
+
+    seats = get_seats(fid)
+    book_seat(u["passenger_id"], fid, seats[0]["id"])
+
+    # filter by passenger, flight, status
+    res = get_bookings(passenger_id=u["passenger_id"], flight_id=fid, status="Confirmed")
+    assert len(res) == 1
+
+def test_get_flight_stats_booked_and_waitlist(client):
+    from utils.database import get_flight_stats, book_seat, get_seats, add_flight, register_user, join_waitlist
+    import time
+    ts = time.time_ns()
+
+    fid = f"FS_{ts}"
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+
+    u1 = register_user(f"u_fs1_{ts}", f"u_fs1_{ts}@example.com", "pass")
+    u2 = register_user(f"u_fs2_{ts}", f"u_fs2_{ts}@example.com", "pass")
+
+    seats = get_seats(fid)
+    book_seat(u1["passenger_id"], fid, seats[0]["id"])
+
+    join_waitlist(u2["passenger_id"], fid, "Economy")
+
+    stats = get_flight_stats(fid)
+    assert stats["waitlist"] == 1
+    assert stats["First"]["booked"] > 0 or stats["Business"]["booked"] > 0 or stats["Economy"]["booked"] > 0
+
+def test_api_update_profile_unauthorized(client):
+    from utils.database import register_user
+    import time
+    ts = time.time_ns()
+
+    u = register_user(f"u_up_auth_{ts}", f"u_up_auth_{ts}@example.com", "pass")
+
+    res = client.put(f"/api/passengers/SOME_OTHER_PID/profile", headers={"X-User-Id": u["id"]}, json={"name": "Valid", "email": "valid@test.com"})
+    assert res.status_code == 403
+
+def test_login_invalid_password_scrypt(client):
+    from utils.database import register_user
+    import time
+    ts = time.time_ns()
+
+    register_user(f"u_login_{ts}", f"u_login_{ts}@example.com", "mypassword")
+
+    res = client.post("/api/auth/login", json={"username": f"u_login_{ts}", "password": "wrongpassword"})
+    assert res.status_code == 401
+
+def test_delete_flight_active_bookings(client):
+    from utils.database import delete_flight, add_flight, register_user, book_seat, get_seats
+    import pytest
+    import time
+    ts = time.time_ns()
+
+    fid = f"F_DEL_{ts}"
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+
+    u = register_user(f"u_del_{ts}", f"u_del_{ts}@example.com", "pass")
+    seats = get_seats(fid)
+    book_seat(u["passenger_id"], fid, seats[0]["id"])
+
+    with pytest.raises(ValueError, match="Cannot delete a flight with active bookings."):
+        delete_flight(fid)
+
+def test_memory_db_initialization():
+    from utils.database import get_conn
+    import os
+    os.environ["DATABASE_PATH"] = ":memory:"
+
+    with get_conn() as conn:
+        res = conn.execute("PRAGMA foreign_keys").fetchone()[0]
+        assert res in (1, "1", "ON")
+
+    os.environ.pop("DATABASE_PATH", None)

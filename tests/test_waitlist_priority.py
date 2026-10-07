@@ -3,7 +3,7 @@ import time
 from utils.database import get_conn, join_waitlist, get_waitlist, update_passenger_tier
 
 def test_waitlist_priority_update(client):
-    username = f"testprio_{int(time.time())}"
+    username = f"testprio_{time.time_ns()}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
