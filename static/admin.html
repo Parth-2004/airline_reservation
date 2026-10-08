@@ -247,27 +247,27 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
         <div class="fg" style="margin:0">
-          <label class="fl">Flight ID</label>
+          <label class="fl" for="nf-id">Flight ID</label>
           <input class="fc" id="nf-id" type="text" placeholder="e.g. AI707" maxlength="8" style="text-transform:uppercase"/>
         </div>
         <div class="fg" style="margin:0">
-          <label class="fl">Origin Code</label>
+          <label class="fl" for="nf-orig">Origin Code</label>
           <input class="fc" id="nf-orig" type="text" placeholder="e.g. DEL" maxlength="4" style="text-transform:uppercase"/>
         </div>
         <div class="fg" style="margin:0">
-          <label class="fl">Origin City</label>
+          <label class="fl" for="nf-orig-full">Origin City</label>
           <input class="fc" id="nf-orig-full" type="text" placeholder="e.g. Delhi"/>
         </div>
         <div class="fg" style="margin:0">
-          <label class="fl">Destination Code</label>
+          <label class="fl" for="nf-dest">Destination Code</label>
           <input class="fc" id="nf-dest" type="text" placeholder="e.g. BOM" maxlength="4" style="text-transform:uppercase"/>
         </div>
         <div class="fg" style="margin:0">
-          <label class="fl">Destination City</label>
+          <label class="fl" for="nf-dest-full">Destination City</label>
           <input class="fc" id="nf-dest-full" type="text" placeholder="e.g. Mumbai"/>
         </div>
         <div class="fg" style="margin:0">
-          <label class="fl">Aircraft Model</label>
+          <label class="fl" for="nf-aircraft">Aircraft Model</label>
           <select class="fc" id="nf-aircraft">
             <option>Boeing 737</option>
             <option>Airbus A320</option>
@@ -276,11 +276,11 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
           </select>
         </div>
         <div class="fg" style="margin:0">
-          <label class="fl">Departure Date & Time</label>
+          <label class="fl" for="nf-dep">Departure Date & Time</label>
           <input class="fc" id="nf-dep" type="datetime-local"/>
         </div>
         <div class="fg" style="margin:0">
-          <label class="fl">Arrival Date & Time</label>
+          <label class="fl" for="nf-arr">Arrival Date & Time</label>
           <input class="fc" id="nf-arr" type="datetime-local"/>
         </div>
         <div style="display:flex;align-items:flex-end">
@@ -311,8 +311,8 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
     </div>
     <div class="card" style="margin-bottom:16px">
       <div style="display:flex;gap:12px">
-        <div class="fg" style="margin:0;flex:1"><label class="fl">Filter Flight</label><select class="fc" id="ab-flight" onchange="loadAllBookings()"><option value="">All Flights</option></select></div>
-        <div class="fg" style="margin:0;flex:1"><label class="fl">Filter Status</label><select class="fc" id="ab-status" onchange="loadAllBookings()"><option value="">All</option><option value="Confirmed">Confirmed</option><option value="Cancelled">Cancelled</option><option value="Upgraded">Upgraded</option></select></div>
+        <div class="fg" style="margin:0;flex:1"><label class="fl" for="ab-flight">Filter Flight</label><select class="fc" id="ab-flight" onchange="loadAllBookings()"><option value="">All Flights</option></select></div>
+        <div class="fg" style="margin:0;flex:1"><label class="fl" for="ab-status">Filter Status</label><select class="fc" id="ab-status" onchange="loadAllBookings()"><option value="">All</option><option value="Confirmed">Confirmed</option><option value="Cancelled">Cancelled</option><option value="Upgraded">Upgraded</option></select></div>
       </div>
     </div>
     <div class="card">
