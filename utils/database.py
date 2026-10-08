@@ -558,38 +558,6 @@ def get_all_flight_stats():
 BOOK_COUNTER = [1]
 
 
-def book_seat(passenger_id: str, flight_id: str, seat_id: str) -> dict:
-    with get_conn() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-
-        pax = conn.execute("SELECT id FROM passengers WHERE id=?", (passenger_id,)).fetchone()
-        if not pax:
-            raise ValueError("Passenger not found.")
-
-        seat = conn.execute(
-            "SELECT * FROM seats WHERE id=? AND flight_id=?", (seat_id, flight_id)
-        ).fetchone()
-        if not seat or seat["status"] != "available":
-            raise ValueError("Seat is not available.")
-
-        bid = f"BK{str(uuid.uuid4())[:6].upper()}"
-        price = PRICES.get(seat["seat_class"], 5000)
-        now = datetime.now().isoformat()
-
-        conn.execute("UPDATE seats SET status='booked', passenger_id=? WHERE id=?",
-                     (passenger_id, seat_id))
-        conn.execute(
-            "INSERT INTO bookings (id,passenger_id,flight_id,seat_id,seat_label,"
-            "seat_class,price,status,booked_at) VALUES (?,?,?,?,?,?,?,?,?)",
-            (bid, passenger_id, flight_id, seat_id, seat["label"],
-             seat["seat_class"], price, "Confirmed", now)
-        )
-        # Remove passenger from waitlist if they are on it for this flight
-        conn.execute("DELETE FROM waitlist WHERE flight_id=? AND passenger_id=?", (flight_id, passenger_id))
-        return {"id": bid, "seat_label": seat["label"], "seat_class": seat["seat_class"],
-                "price": price, "status": "Confirmed"}
-
-
 def book_multiple_seats(passenger_id: str, flight_id: str, seat_ids: list) -> dict:
     """Book multiple seats at once for a single passenger on a single flight.
     All seats are booked atomically — if any fail, none are booked."""

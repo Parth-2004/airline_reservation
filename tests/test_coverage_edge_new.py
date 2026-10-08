@@ -445,7 +445,7 @@ def test_upgrade_booking_not_found_db(client):
         upgrade_booking("NONEXISTENT", "SOME_SEAT")
 
 def test_upgrade_seat_not_on_same_flight(client):
-    from utils.database import upgrade_booking, add_flight, book_seat, get_seats, register_user
+    from utils.database import upgrade_booking, add_flight, book_multiple_seats, get_seats, register_user
     import pytest
     import time
     ts = time.time_ns()
@@ -464,7 +464,7 @@ def test_upgrade_seat_not_on_same_flight(client):
     seats2 = get_seats(fid2)
     seat2 = seats2[0]["id"]
 
-    booking = book_seat(u["passenger_id"], fid1, seat1)
+    booking = book_multiple_seats(u["passenger_id"], fid1, [seat1])["bookings"][0]
 
     with pytest.raises(ValueError, match="Upgrade seat must be on the same flight."):
         upgrade_booking(booking["id"], seat2)
@@ -500,7 +500,7 @@ def test_waitlist_already_on_waitlist(client):
         join_waitlist(u["passenger_id"], fid, "Economy")
 
 def test_waitlist_already_booked(client):
-    from utils.database import join_waitlist, add_flight, register_user, book_seat, get_seats
+    from utils.database import join_waitlist, add_flight, register_user, book_multiple_seats, get_seats
     import pytest
     import time
     ts = time.time_ns()
@@ -510,7 +510,7 @@ def test_waitlist_already_booked(client):
 
     u = register_user(f"u_wl2_{ts}", f"u_wl2_{ts}@example.com", "pass")
     seats = get_seats(fid)
-    book_seat(u["passenger_id"], fid, seats[0]["id"])
+    book_multiple_seats(u["passenger_id"], fid, [seats[0]["id"]])
 
     with pytest.raises(ValueError, match="Passenger already has an active booking on this flight."):
         join_waitlist(u["passenger_id"], fid, "Economy")
@@ -540,7 +540,7 @@ def test_book_multiple_seats_empty_list_db(client):
         book_multiple_seats("p_id", "f_id", [])
 
 def test_get_bookings_filters(client):
-    from utils.database import get_bookings, book_seat, get_seats, add_flight, register_user
+    from utils.database import get_bookings, book_multiple_seats, get_seats, add_flight, register_user
     import time
     ts = time.time_ns()
 
@@ -550,14 +550,14 @@ def test_get_bookings_filters(client):
     u = register_user(f"u_b_{ts}", f"u_b_{ts}@example.com", "pass")
 
     seats = get_seats(fid)
-    book_seat(u["passenger_id"], fid, seats[0]["id"])
+    book_multiple_seats(u["passenger_id"], fid, [seats[0]["id"]])
 
     # filter by passenger, flight, status
     res = get_bookings(passenger_id=u["passenger_id"], flight_id=fid, status="Confirmed")
     assert len(res) == 1
 
 def test_get_flight_stats_booked_and_waitlist(client):
-    from utils.database import get_flight_stats, book_seat, get_seats, add_flight, register_user, join_waitlist
+    from utils.database import get_flight_stats, book_multiple_seats, get_seats, add_flight, register_user, join_waitlist
     import time
     ts = time.time_ns()
 
@@ -568,7 +568,7 @@ def test_get_flight_stats_booked_and_waitlist(client):
     u2 = register_user(f"u_fs2_{ts}", f"u_fs2_{ts}@example.com", "pass")
 
     seats = get_seats(fid)
-    book_seat(u1["passenger_id"], fid, seats[0]["id"])
+    book_multiple_seats(u1["passenger_id"], fid, [seats[0]["id"]])
 
     join_waitlist(u2["passenger_id"], fid, "Economy")
 
@@ -597,7 +597,7 @@ def test_login_invalid_password_scrypt(client):
     assert res.status_code == 401
 
 def test_delete_flight_active_bookings(client):
-    from utils.database import delete_flight, add_flight, register_user, book_seat, get_seats
+    from utils.database import delete_flight, add_flight, register_user, book_multiple_seats, get_seats
     import pytest
     import time
     ts = time.time_ns()
@@ -607,7 +607,7 @@ def test_delete_flight_active_bookings(client):
 
     u = register_user(f"u_del_{ts}", f"u_del_{ts}@example.com", "pass")
     seats = get_seats(fid)
-    book_seat(u["passenger_id"], fid, seats[0]["id"])
+    book_multiple_seats(u["passenger_id"], fid, [seats[0]["id"]])
 
     with pytest.raises(ValueError, match="Cannot delete a flight with active bookings."):
         delete_flight(fid)
