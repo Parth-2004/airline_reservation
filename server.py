@@ -13,7 +13,7 @@ from utils.database import (
     get_all_passengers, update_passenger_tier, update_passenger_profile,
     get_all_flights, get_flight, get_seats, get_seat_map, get_flight_stats, get_all_flight_stats,
     add_flight, delete_flight, AIRCRAFT_LAYOUTS,
-    book_seat, book_multiple_seats, get_bookings, cancel_booking, upgrade_booking,
+    book_multiple_seats, get_bookings, cancel_booking, upgrade_booking,
     join_waitlist, get_waitlist, remove_from_waitlist,
     get_dashboard_stats, get_revenue_report, get_occupancy_report,
 )
@@ -315,7 +315,7 @@ def api_book():
             result = book_multiple_seats(pid, fid, seat_ids)
             return ok(result), 201
         elif seat_id:
-            result = book_seat(pid, fid, seat_id)
+            result = book_multiple_seats(pid, fid, [seat_id])["bookings"][0]
             return ok(result), 201
         else:
             return err("Provide seat_id or seat_ids.")

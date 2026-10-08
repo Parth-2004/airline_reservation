@@ -41,7 +41,7 @@ def test_waitlist_double_booking(client):
     })
     assert res.status_code == 201
 
-    # User 1 manually books seat_1 (allowed because book_seat doesn't check if already booked or on waitlist)
+    # User 1 manually books seat_1 (allowed because book_multiple_seats doesn't check if already booked or on waitlist)
     res = client.post("/api/bookings", headers={"X-User-Id": u1_id}, json={
         "passenger_id": u1_pax,
         "flight_id": flight_id,
