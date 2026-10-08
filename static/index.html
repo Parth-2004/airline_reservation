@@ -276,8 +276,8 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
       <div>
         <div class="card" style="margin-bottom:16px">
           <div class="ct">Step 1 — Select Details</div>
-          <div class="fg"><label class="fl">Flight</label><select class="fc" id="bk-flight"></select></div>
-          <div class="fg"><label class="fl">Seat Class</label>
+          <div class="fg"><label class="fl" for="bk-flight">Flight</label><select class="fc" id="bk-flight"></select></div>
+          <div class="fg"><label class="fl" for="bk-class">Seat Class</label>
             <select class="fc" id="bk-class">
               <option value="">All Classes</option>
               <option value="First">First Class</option>
@@ -311,7 +311,7 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
         <div class="card" id="bk-wl-box" style="display:none;margin-top:16px">
           <div class="ct">Flight Full — Join Waitlist</div>
           <p style="font-family:var(--M);font-size:11px;color:var(--muted);margin-bottom:12px">No seats available. Add yourself to the waiting list and we'll auto-assign when one opens.</p>
-          <div class="fg"><label class="fl">Preferred Class</label>
+          <div class="fg"><label class="fl" for="bk-wl-cls">Preferred Class</label>
             <select class="fc" id="bk-wl-cls"><option value="Economy">Economy</option><option value="Business">Business</option><option value="First">First Class</option></select>
           </div>
           <button class="btn btn-g" style="width:100%" onclick="joinWaitlistFromBook()">Join Waitlist</button>
@@ -332,8 +332,8 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
     <div class="ph"><h1><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>My Bookings</h1><p>Your reservation history</p><div class="aline"></div></div>
     <div class="card" style="margin-bottom:14px">
       <div style="display:flex;gap:12px;align-items:flex-end">
-        <div class="fg" style="margin:0;flex:1"><label class="fl">Filter Flight</label><select class="fc" id="fb-flight" onchange="loadBookings()"><option value="">All Flights</option></select></div>
-        <div class="fg" style="margin:0;flex:1"><label class="fl">Filter Status</label><select class="fc" id="fb-status" onchange="loadBookings()"><option value="">All</option><option>Confirmed</option><option>Cancelled</option><option>Upgraded</option></select></div>
+        <div class="fg" style="margin:0;flex:1"><label class="fl" for="fb-flight">Filter Flight</label><select class="fc" id="fb-flight" onchange="loadBookings()"><option value="">All Flights</option></select></div>
+        <div class="fg" style="margin:0;flex:1"><label class="fl" for="fb-status">Filter Status</label><select class="fc" id="fb-status" onchange="loadBookings()"><option value="">All</option><option>Confirmed</option><option>Cancelled</option><option>Upgraded</option></select></div>
       </div>
     </div>
     <div id="bookings-list"></div>
@@ -345,8 +345,8 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
     <div class="g2" style="align-items:start">
       <div class="card">
         <div class="ct">Join Waiting List</div>
-        <div class="fg"><label class="fl">Flight</label><select class="fc" id="wl-flight"></select></div>
-        <div class="fg"><label class="fl">Preferred Class</label>
+        <div class="fg"><label class="fl" for="wl-flight">Flight</label><select class="fc" id="wl-flight"></select></div>
+        <div class="fg"><label class="fl" for="wl-cls">Preferred Class</label>
           <select class="fc" id="wl-cls"><option value="Economy">Economy</option><option value="Business">Business</option><option value="First">First Class</option></select>
         </div>
         <button class="btn btn-p" style="width:100%" onclick="joinWaitlist()">
@@ -367,15 +367,15 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
     <div class="card" style="max-width:400px">
       <div class="ct">Personal Details</div>
       <div class="fg">
-        <label class="fl">Full Name</label>
+        <label class="fl" for="prof-name">Full Name</label>
         <input type="text" class="fc" id="prof-name" placeholder="Your name">
       </div>
       <div class="fg">
-        <label class="fl">Email Address</label>
+        <label class="fl" for="prof-email">Email Address</label>
         <input type="email" class="fc" id="prof-email" placeholder="Your email">
       </div>
       <div class="fg">
-        <label class="fl">Membership Tier</label>
+        <label class="fl" for="prof-tier">Membership Tier</label>
         <input type="text" class="fc" id="prof-tier" readonly disabled style="color:var(--muted)">
       </div>
       <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="updateProfile()">Save Changes</button>
@@ -822,7 +822,7 @@ async function showUpgradeModal(bid, fid, currentClass) {
     <div id="upgrade-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;display:flex;align-items:center;justify-content:center">
       <div style="background:rgba(15,25,45,.97);border:1px solid var(--border-b);border-radius:14px;padding:28px;width:100%;max-width:380px;backdrop-filter:blur(20px)">
         <div style="font-family:var(--F);font-size:18px;font-weight:700;margin-bottom:16px">Upgrade Booking ${bid}</div>
-        <div class="fg"><label class="fl">Select Upgrade Seat</label><select class="fc" id="up-seat">${opts}</select></div>
+        <div class="fg"><label class="fl" for="up-seat">Select Upgrade Seat</label><select class="fc" id="up-seat">${opts}</select></div>
         <div style="display:flex;gap:10px;margin-top:16px">
           <button class="btn btn-p" style="flex:1" onclick="confirmUpgrade('${bid}')">Confirm Upgrade</button>
           <button class="btn btn-g" onclick="document.getElementById('upgrade-overlay').remove()">Cancel</button>
