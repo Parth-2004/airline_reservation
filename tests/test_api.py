@@ -128,6 +128,17 @@ def test_booking_cancel(client):
     bookings = res.get_json()["data"]
     assert bookings[0]["status"] == "Cancelled"
 
+def test_register_invalid_email_format(client):
+    import time
+    username = f"user_{time.time_ns()}"
+    res = client.post("/api/auth/register", json={
+        "username": username,
+        "email": "invalid_email_no_at_or_domain",
+        "password": "pwd"
+    })
+    assert res.status_code == 400
+    assert "Invalid email format." in res.get_json()["error"]
+
 def test_register_empty_fields(client):
     # Test empty username
     res = client.post("/api/auth/register", json={

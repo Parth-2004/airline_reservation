@@ -32,6 +32,26 @@ def test_update_profile(client):
         user = conn.execute("SELECT email FROM users WHERE id=?", (uid,)).fetchone()
         assert user["email"] == new_email
 
+def test_update_profile_invalid_email_format(client):
+    import time
+    username = f"testprofile_{time.time_ns()}"
+    res = client.post("/api/auth/register", json={
+        "username": username,
+        "email": f"{username}@test.com",
+        "password": "pwd"
+    })
+
+    uid = res.get_json()["data"]["id"]
+    pid = res.get_json()["data"]["passenger_id"]
+
+    res = client.put(f"/api/passengers/{pid}/profile", headers={"X-User-Id": uid}, json={
+        "name": "New Name",
+        "email": "invalid_email_without_at_or_domain"
+    })
+
+    assert res.status_code == 400
+    assert "Invalid email format." in res.get_json()["error"]
+
 def test_update_profile_email_taken(client):
     u1 = f"u1_{time.time_ns()}"
     client.post("/api/auth/register", json={"username": u1, "email": f"{u1}@test.com", "password": "pwd"})

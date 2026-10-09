@@ -6,6 +6,7 @@ import sqlite3
 import hashlib
 import os
 import uuid
+import re
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -293,6 +294,9 @@ def register_user(username: str, email: str, password: str, role: str = "user") 
     email = str(email).strip()
     password = str(password)
 
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        raise ValueError("Invalid email format.")
+
     with get_conn() as conn:
         conn.execute("BEGIN IMMEDIATE")
         existing = conn.execute(
@@ -389,6 +393,9 @@ def update_passenger_profile(passenger_id: str, name: str, email: str):
         raise ValueError("Name cannot be empty.")
     if not email:
         raise ValueError("Email cannot be empty.")
+
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        raise ValueError("Invalid email format.")
 
     with get_conn() as conn:
         conn.execute("BEGIN IMMEDIATE")
