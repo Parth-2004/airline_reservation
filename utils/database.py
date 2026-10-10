@@ -220,6 +220,12 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
     if dest_full is None or not str(dest_full).strip():
         raise ValueError("Destination full name cannot be empty.")
 
+    flight_id = str(flight_id).strip()
+    origin = str(origin).strip()
+    origin_full = str(origin_full).strip()
+    destination = str(destination).strip()
+    dest_full = str(dest_full).strip()
+
     if aircraft_model not in AIRCRAFT_LAYOUTS:
         raise ValueError(f"Invalid aircraft model: {aircraft_model}")
 
@@ -322,7 +328,7 @@ def login_user(username: str, password: str) -> dict:
     if not password:
         raise ValueError("Invalid credentials.")
 
-    username = str(username) if username is not None else ""
+    username = str(username).strip() if username is not None else ""
     password = str(password)
     with get_conn() as conn:
         row = conn.execute(
