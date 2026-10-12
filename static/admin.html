@@ -226,7 +226,7 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
     </div>
     <div class="card">
       <table class="dt">
-        <thead><tr><th>Name</th><th>Email</th><th>Tier</th><th>Passenger ID</th><th>Update Tier</th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Tier</th><th>Passenger ID</th><th>Update Settings</th></tr></thead>
         <tbody id="pax-tbody"></tbody>
       </table>
     </div>
@@ -496,8 +496,8 @@ async function loadPassengers() {
   if (!j.ok) return;
   document.getElementById('pax-tbody').innerHTML = j.data.map(p => `
     <tr>
-      <td><strong>${p.name}</strong></td>
-      <td style="color:var(--muted)">${p.email}</td>
+      <td><input type="text" class="fc" style="height:28px;padding:3px 8px;font-size:11px;width:160px" id="name-${p.id}" value="${p.name}"></td>
+      <td><input type="email" class="fc" style="height:28px;padding:3px 8px;font-size:11px;width:200px" id="email-${p.id}" value="${p.email}"></td>
       <td>${tierBadge(p.tier)}</td>
       <td style="font-family:var(--M);font-size:10px;color:var(--muted)">${p.id}</td>
       <td>
@@ -506,18 +506,41 @@ async function loadPassengers() {
           <option ${p.tier==='Gold'?'selected':''}>Gold</option>
           <option ${p.tier==='Platinum'?'selected':''}>Platinum</option>
         </select>
-        <button class="btn btn-g btn-sm" style="margin-left:6px" onclick="updateTier('${p.id}')">Save</button>
+        <button class="btn btn-g btn-sm" style="margin-left:6px" onclick="updatePassenger('${p.id}')">Save</button>
       </td>
     </tr>`).join('');
 }
 
-async function updateTier(pid) {
+async function updatePassenger(pid) {
+  const name = document.getElementById('name-' + pid).value;
+  const email = document.getElementById('email-' + pid).value;
   const tier = document.getElementById('tier-' + pid).value;
-  const j = await apiFetch(`/api/passengers/${pid}/tier`, {
+
+  if (!name || !email) {
+    toast('Name and email are required.', 'err');
+    return;
+  }
+
+  const j1 = await apiFetch(`/api/passengers/${pid}/profile`, {
+    method: 'PUT', body: JSON.stringify({ name, email })
+  });
+
+  if (!j1.ok) {
+    toast(j1.error, 'err');
+    return;
+  }
+
+  const j2 = await apiFetch(`/api/passengers/${pid}/tier`, {
     method: 'PUT', body: JSON.stringify({ tier })
   });
-  if (j.ok) { toast(`Tier updated to ${tier}`); loadPassengers(); }
-  else toast(j.error, 'err');
+
+  if (!j2.ok) {
+    toast(j2.error, 'err');
+    return;
+  }
+
+  toast(`Passenger ${pid} updated.`);
+  loadPassengers();
 }
 
 // ── Admin Flights ────────────────────────────────────────
