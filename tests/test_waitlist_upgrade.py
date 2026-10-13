@@ -1,13 +1,15 @@
+import uuid
 import pytest
 import time
 
 def test_waitlist(client):
-    username = f"testwaitlist_{int(time.time())}"
+    username = f"testwaitlist_{uuid.uuid4().hex[:8]}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
         "password": "testpassword123"
     })
+    assert res.status_code == 201, f"Registration failed: {res.get_json()}"
     user_id = res.get_json()["data"]["id"]
     passenger_id = res.get_json()["data"]["passenger_id"]
 
@@ -41,12 +43,13 @@ def test_upgrade(client):
     with get_conn() as conn:
         conn.execute("UPDATE seats SET status='available' WHERE status='booked'")
         conn.execute("DELETE FROM waitlist")
-    username = f"testupgrade_{int(time.time())}"
+    username = f"testupgrade_{uuid.uuid4().hex[:8]}"
     res = client.post("/api/auth/register", json={
         "username": username,
         "email": f"{username}@example.com",
         "password": "testpassword123"
     })
+    assert res.status_code == 201, f"Registration failed: {res.get_json()}"
     user_id = res.get_json()["data"]["id"]
     passenger_id = res.get_json()["data"]["passenger_id"]
 
@@ -71,12 +74,13 @@ def test_upgrade(client):
         booking_id = res.get_json()["data"]["id"]
 
         # Create second user to join waitlist for old seat class
-        username2 = f"testwaitlist2_{int(time.time())}"
+        username2 = f"testwaitlist2_{uuid.uuid4().hex[:8]}"
         res2 = client.post("/api/auth/register", json={
             "username": username2,
             "email": f"{username2}@example.com",
             "password": "testpassword123"
         })
+        assert res2.status_code == 201, f"Registration failed: {res2.get_json()}"
         user_id2 = res2.get_json()["data"]["id"]
         passenger_id2 = res2.get_json()["data"]["passenger_id"]
 
