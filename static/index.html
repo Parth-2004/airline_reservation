@@ -126,6 +126,7 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
 .scl.Economy{color:#6EE7B7;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25)}
 .sr{display:flex;align-items:center;gap:3px;margin-bottom:4px}
 .rn{font-family:var(--M);font-size:9px;color:var(--muted);width:22px;text-align:right;margin-right:7px;flex-shrink:0}
+.seat:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .seat{width:32px;height:28px;border-radius:5px 5px 3px 3px;display:flex;align-items:center;justify-content:center;font-family:var(--M);font-size:9px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid transparent;flex-shrink:0}
 .seat.av{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.35);color:#6EE7B7}
 .seat.av:hover{background:rgba(16,185,129,.25);border-color:var(--green);transform:translateY(-2px);box-shadow:0 4px 10px rgba(16,185,129,.2)}
@@ -658,7 +659,7 @@ async function loadSeatMap() {
       html += `<div class="seat ${av ? 'av' : 'bk'}"
         data-sid="${s.id}" data-label="${s.label}" data-class="${s.seat_class}" data-price="${price}"
         data-fid="${fid}"
-        ${av ? `onclick="toggleSeat(this)"` : 'title="Booked"'}>${s.label}</div>`;
+        ${av ? `onclick="toggleSeat(this)"` : 'title="Booked"'} tabindex="${av ? '0' : '-1'}" role="button" aria-label="Seat ${s.label}, ${s.seat_class}, ${av ? 'Available, ' + fmt(price) : 'Booked'}" onkeydown="if(av && (event.key==='Enter'||event.key===' ')) { event.preventDefault(); toggleSeat(this); }">${s.label}</div>`;
     });
     html += '</div>';
   });
