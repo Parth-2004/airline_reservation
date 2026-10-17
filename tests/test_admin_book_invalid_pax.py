@@ -19,8 +19,8 @@ def test_admin_book_invalid_pax(client):
         "origin_full": "New York",
         "destination": "LHR",
         "dest_full": "London",
-        "departure_time": "2024-12-01T10:00:00",
-        "arrival_time": "2024-12-01T22:00:00",
+        "departure_time": "2035-12-01T10:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
 

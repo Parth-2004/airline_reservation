@@ -13,7 +13,7 @@ def test_admin_cancel_other_user_booking(client):
     admin_id = res.get_json()["data"]["id"]
 
     try:
-        add_flight("TESTFLIGHT4", "AAA", "A", "BBB", "B", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+        add_flight("TESTFLIGHT4", "AAA", "A", "BBB", "B", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
     except ValueError:
         pass
 
@@ -47,7 +47,7 @@ def test_admin_book_other_user(client):
     admin_id = res.get_json()["data"]["id"]
 
     try:
-        add_flight("TESTFLIGHT5", "AAA", "A", "BBB", "B", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+        add_flight("TESTFLIGHT5", "AAA", "A", "BBB", "B", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
     except ValueError:
         pass
 

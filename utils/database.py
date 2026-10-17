@@ -238,6 +238,9 @@ def add_flight(flight_id: str, origin: str, origin_full: str,
     if dt_arr <= dt_dep:
         raise ValueError("Arrival time must be after departure time.")
 
+    if dt_dep < datetime.now():
+        raise ValueError("Departure time cannot be in the past.")
+
     with get_conn() as conn:
         conn.execute("BEGIN IMMEDIATE")
         # Validate no duplicate
