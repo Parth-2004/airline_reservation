@@ -15,8 +15,8 @@ def test_admin_flights(client):
         "origin_full": "New York",
         "destination": "LHR",
         "dest_full": "London",
-        "departure_time": "2024-12-01T10:00:00",
-        "arrival_time": "2024-12-01T22:00:00",
+        "departure_time": "2035-12-01T10:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
     assert res.status_code == 201
@@ -50,17 +50,20 @@ def test_admin_bookings(client):
 
 def test_add_flight_invalid_aircraft_model():
     with pytest.raises(ValueError, match="Invalid aircraft model: InvalidModel"):
-        add_flight("TF_INV_AM", "A", "A", "B", "B", "2024-12-01T10:00:00", "2024-12-01T22:00:00", "InvalidModel")
+        add_flight("TF_INV_AM", "A", "A", "B", "B", "2035-12-01T10:00:00", "2035-12-01T22:00:00", "InvalidModel")
 
 def test_add_flight_invalid_dates():
     with pytest.raises(ValueError, match="Invalid date format."):
         add_flight("TF_INV1", "A", "A", "B", "B", "invalid_date", "invalid_date")
 
     with pytest.raises(ValueError, match="Arrival time must be after departure time."):
-        add_flight("TF_INV2", "A", "A", "B", "B", "2024-12-01T22:00:00", "2024-12-01T10:00:00")
+        add_flight("TF_INV2", "A", "A", "B", "B", "2035-12-01T22:00:00", "2035-12-01T10:00:00")
 
     with pytest.raises(ValueError, match="Arrival time must be after departure time."):
-        add_flight("TF_INV3", "A", "A", "B", "B", "2024-12-01T10:00:00", "2024-12-01T10:00:00")
+        add_flight("TF_INV3", "A", "A", "B", "B", "2035-12-01T10:00:00", "2035-12-01T10:00:00")
+
+    with pytest.raises(ValueError, match="Departure time cannot be in the past."):
+        add_flight("TF_INV4", "A", "A", "B", "B", "2023-01-01T10:00:00", "2023-01-01T14:00:00")
 
 
 def test_add_flight_empty_fields(client):
@@ -73,8 +76,8 @@ def test_add_flight_empty_fields(client):
         "origin_full": "New York",
         "destination": "LHR",
         "dest_full": "London",
-        "departure_time": "2024-12-01T10:00:00",
-        "arrival_time": "2024-12-01T22:00:00",
+        "departure_time": "2035-12-01T10:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
     assert res.status_code == 400
@@ -86,8 +89,8 @@ def test_add_flight_empty_fields(client):
         "origin_full": "New York",
         "destination": "LHR",
         "dest_full": "London",
-        "departure_time": "2024-12-01T10:00:00",
-        "arrival_time": "2024-12-01T22:00:00",
+        "departure_time": "2035-12-01T10:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
     assert res.status_code == 400
@@ -99,8 +102,8 @@ def test_add_flight_empty_fields(client):
         "origin_full": "",
         "destination": "LHR",
         "dest_full": "London",
-        "departure_time": "2024-12-01T10:00:00",
-        "arrival_time": "2024-12-01T22:00:00",
+        "departure_time": "2035-12-01T10:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
     assert res.status_code == 400
@@ -112,8 +115,8 @@ def test_add_flight_empty_fields(client):
         "origin_full": "New York",
         "destination": "  ",
         "dest_full": "London",
-        "departure_time": "2024-12-01T10:00:00",
-        "arrival_time": "2024-12-01T22:00:00",
+        "departure_time": "2035-12-01T10:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
     assert res.status_code == 400
@@ -125,8 +128,8 @@ def test_add_flight_empty_fields(client):
         "origin_full": "New York",
         "destination": "LHR",
         "dest_full": "",
-        "departure_time": "2024-12-01T10:00:00",
-        "arrival_time": "2024-12-01T22:00:00",
+        "departure_time": "2035-12-01T10:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
     assert res.status_code == 400
@@ -142,8 +145,8 @@ def test_add_flight_none_values(client):
         "origin_full": "New York",
         "destination": "LHR",
         "dest_full": "London",
-        "departure_time": "2024-12-01T10:00:00",
-        "arrival_time": "2024-12-01T22:00:00",
+        "departure_time": "2035-12-01T10:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
     assert res.status_code == 400
@@ -156,7 +159,7 @@ def test_add_flight_none_values(client):
         "destination": "LHR",
         "dest_full": "London",
         "departure_time": None,
-        "arrival_time": "2024-12-01T22:00:00",
+        "arrival_time": "2035-12-01T22:00:00",
         "aircraft_model": "Boeing 737"
     })
     assert res.status_code == 400

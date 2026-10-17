@@ -43,8 +43,8 @@ def data():
     # Add flights
     f1 = f"F1_{ts}"
     f2 = f"F2_{ts}"
-    add_flight(f1, "JFK", "John F", "LAX", "Los Angeles", "2025-12-01T10:00", "2025-12-01T14:00", "Boeing 737")
-    add_flight(f2, "JFK", "John F", "LAX", "Los Angeles", "2025-12-01T10:00", "2025-12-01T14:00", "Boeing 737")
+    add_flight(f1, "JFK", "John F", "LAX", "Los Angeles", "2035-12-01T10:00", "2035-12-01T14:00", "Boeing 737")
+    add_flight(f2, "JFK", "John F", "LAX", "Los Angeles", "2035-12-01T10:00", "2035-12-01T14:00", "Boeing 737")
 
     # Book a seat for user 2 on f1
     with get_conn() as conn:

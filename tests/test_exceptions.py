@@ -87,7 +87,7 @@ def test_invalid_register_trailing_spaces(client):
 def test_add_flight_int_input(client):
     from utils.database import get_conn, hash_password
     with get_conn() as conn:
-        conn.execute("INSERT OR IGNORE INTO users (id, username, email, password, role, created_at) VALUES ('testadmin', 'testadmin', 'testadmin@test.com', ?, 'admin', '2025-01-01')", (hash_password('admin123'),))
+        conn.execute("INSERT OR IGNORE INTO users (id, username, email, password, role, created_at) VALUES ('testadmin', 'testadmin', 'testadmin@test.com', ?, 'admin', '2035-01-01')", (hash_password('admin123'),))
 
     import time
     resp = client.post("/api/admin/flights", json={
@@ -97,8 +97,8 @@ def test_add_flight_int_input(client):
         "origin_full": 789,
         "destination": 101,
         "dest_full": 112,
-        "departure_time": "2025-05-01T10:00:00",
-        "arrival_time": "2025-05-01T14:00:00"
+        "departure_time": "2035-05-01T10:00:00",
+        "arrival_time": "2035-05-01T14:00:00"
     })
     # Assuming valid dates are provided, the strings should be stripped normally
     assert resp.status_code == 201

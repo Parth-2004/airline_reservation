@@ -242,7 +242,7 @@ def test_api_cancel_booking_value_error(client):
     # Add a flight to book
     f_id = f"F_{ts}"
     from utils.database import add_flight, book_multiple_seats
-    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
 
     with get_conn() as conn:
         seat = conn.execute("SELECT id FROM seats WHERE flight_id=? LIMIT 1", (f_id,)).fetchone()
@@ -266,7 +266,7 @@ def test_api_upgrade_booking_value_error(client):
 
     f_id = f"F_UP_{ts}"
     from utils.database import add_flight, book_multiple_seats
-    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
 
     with get_conn() as conn:
         seat = conn.execute("SELECT id FROM seats WHERE flight_id=? LIMIT 1", (f_id,)).fetchone()
@@ -306,7 +306,7 @@ def test_api_waitlist_admin_remove_other(client):
 
     f_id = f"F_WL_{ts}"
     from utils.database import add_flight, join_waitlist
-    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
 
     join_waitlist(user1["passenger_id"], f_id)
     with get_conn() as conn:
@@ -361,7 +361,7 @@ def test_api_seatmap_flight_found(client):
     ts = int(time.time() * 1000)
     f_id = f"F_SM_{ts}"
     from utils.database import add_flight
-    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
 
     res = client.get(f"/api/flights/{f_id}/seatmap")
     assert res.status_code == 200
@@ -370,7 +370,7 @@ def test_database_get_seats_with_class(client):
     from utils.database import get_seats, add_flight
     ts = int(time.time() * 1000)
     f_id = f"F_SC_{ts}"
-    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
 
     seats = get_seats(f_id, seat_class="Economy")
     assert len(seats) > 0
@@ -385,7 +385,7 @@ def test_api_admin_book_passenger_not_found(client):
 
     f_id = f"F_B3_{ts}"
     from utils.database import add_flight
-    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
 
     with get_conn() as conn:
         seat = conn.execute("SELECT id FROM seats WHERE flight_id=? LIMIT 1", (f_id,)).fetchone()
@@ -399,7 +399,7 @@ def test_database_book_multiple_seats_seat_unavailable(client):
     data = register_user(f"u_bms2_{ts}", f"u_bms2_{ts}@example.com", "password")
 
     f_id = f"F_BMS2_{ts}"
-    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2024-01-01T00:00:00", "2024-01-01T01:00:00", "Boeing 737")
+    add_flight(f_id, "ORG", "Origin", "DST", "Dest", "2035-01-01T00:00:00", "2035-01-01T01:00:00", "Boeing 737")
 
     with get_conn() as conn:
         seat = conn.execute("SELECT id FROM seats WHERE flight_id=? LIMIT 1", (f_id,)).fetchone()
@@ -419,8 +419,8 @@ def test_add_flight_duplicate(client):
     from utils.database import add_flight
     import pytest
     with pytest.raises(ValueError, match="already exists"):
-        add_flight("DUP_FLIGHT", "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
-        add_flight("DUP_FLIGHT", "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+        add_flight("DUP_FLIGHT", "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
+        add_flight("DUP_FLIGHT", "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
 
 def test_delete_flight_not_found(client):
     from utils.database import delete_flight
@@ -434,7 +434,7 @@ def test_join_waitlist_passenger_not_found(client):
     import time
     ts = time.time_ns()
     fid = f"F_{ts}"
-    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
     with pytest.raises(ValueError, match="Passenger not found."):
         join_waitlist("NONEXISTENT_PAX", fid, "Economy")
 
@@ -453,8 +453,8 @@ def test_upgrade_seat_not_on_same_flight(client):
     fid1 = f"F1_{ts}"
     fid2 = f"F2_{ts}"
 
-    add_flight(fid1, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
-    add_flight(fid2, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    add_flight(fid1, "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
+    add_flight(fid2, "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
 
     u = register_user(f"u_upg_{ts}", f"u_upg_{ts}@example.com", "pass")
 
@@ -475,7 +475,7 @@ def test_login_invalid_legacy_hash(client):
 
     with get_conn() as conn:
         conn.execute(
-            "INSERT OR IGNORE INTO users (id, username, email, password, role, created_at) VALUES ('legacy_invalid_test', 'legacy_invalid', 'legacy_invalid@example.com', '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'user', '2025-01-01')"
+            "INSERT OR IGNORE INTO users (id, username, email, password, role, created_at) VALUES ('legacy_invalid_test', 'legacy_invalid', 'legacy_invalid@example.com', '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'user', '2035-01-01')"
         )
 
     res = client.post("/api/auth/login", json={"username": "legacy_invalid", "password": "wrong_password"})
@@ -491,7 +491,7 @@ def test_waitlist_already_on_waitlist(client):
     ts = time.time_ns()
 
     fid = f"FW1_{ts}"
-    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
 
     u = register_user(f"u_wl1_{ts}", f"u_wl1_{ts}@example.com", "pass")
     join_waitlist(u["passenger_id"], fid, "Economy")
@@ -506,7 +506,7 @@ def test_waitlist_already_booked(client):
     ts = time.time_ns()
 
     fid = f"FW2_{ts}"
-    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
 
     u = register_user(f"u_wl2_{ts}", f"u_wl2_{ts}@example.com", "pass")
     seats = get_seats(fid)
@@ -545,7 +545,7 @@ def test_get_bookings_filters(client):
     ts = time.time_ns()
 
     fid = f"FB_{ts}"
-    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
 
     u = register_user(f"u_b_{ts}", f"u_b_{ts}@example.com", "pass")
 
@@ -562,7 +562,7 @@ def test_get_flight_stats_booked_and_waitlist(client):
     ts = time.time_ns()
 
     fid = f"FS_{ts}"
-    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
 
     u1 = register_user(f"u_fs1_{ts}", f"u_fs1_{ts}@example.com", "pass")
     u2 = register_user(f"u_fs2_{ts}", f"u_fs2_{ts}@example.com", "pass")
@@ -603,7 +603,7 @@ def test_delete_flight_active_bookings(client):
     ts = time.time_ns()
 
     fid = f"F_DEL_{ts}"
-    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2024-01-01T10:00:00", "2024-01-01T14:00:00")
+    add_flight(fid, "ORG", "Origin", "DST", "Dest", "2035-01-01T10:00:00", "2035-01-01T14:00:00")
 
     u = register_user(f"u_del_{ts}", f"u_del_{ts}@example.com", "pass")
     seats = get_seats(fid)
