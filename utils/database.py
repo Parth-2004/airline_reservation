@@ -179,6 +179,9 @@ def _seed_flights(conn):
         ("AI404", "MAA", "Chennai",   "DEL", "Delhi",    12,  0, 14, 30),
         ("AI505", "HYD", "Hyderabad", "BOM", "Mumbai",   15,  0, 16, 30),
         ("AI606", "BLR", "Bangalore", "MAA", "Chennai",  18,  0, 19,  0),
+        ("AI707", "CCU", "Kolkata",   "DEL", "Delhi",    21,  0, 23, 15),
+        ("AI808", "PNQ", "Pune",      "BLR", "Bangalore", 2, 30,  4, 20),
+        ("AI909", "AMD", "Ahmedabad", "BOM", "Mumbai",    5,  0,  6, 15),
     ]
 
     for fid, orig, orig_full, dest, dest_full, dh, dm, ah, am in flights_data:
