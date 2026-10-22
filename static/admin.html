@@ -31,7 +31,7 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
 .sb-label{font-family:var(--M);font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;padding:10px 18px 5px}
 .nav{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;border-left:3px solid transparent;font-family:var(--F);font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);transition:all .2s;user-select:none}
 .nav svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
-.nav:hover{color:var(--text);background:rgba(59,130,246,.07);border-left-color:rgba(59,130,246,.4)}
+.nav:hover, .nav:focus-visible{color:var(--text);background:rgba(59,130,246,.07);border-left-color:rgba(59,130,246,.4);outline:none;}
 .nav.active{color:var(--accent);background:rgba(59,130,246,.1);border-left-color:var(--accent)}
 .nav.active svg{opacity:1}
 .sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border)}
@@ -136,24 +136,24 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
   </div>
 
   <div class="sb-label">Overview</div>
-  <div class="nav active" data-s="overview">
+  <div class="nav active" data-s="overview" tabindex="0" role="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview
   </div>
 
   <div class="sb-label">Management</div>
-  <div class="nav" data-s="users">
+  <div class="nav" data-s="users" tabindex="0" role="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Users
   </div>
-  <div class="nav" data-s="passengers">
+  <div class="nav" data-s="passengers" tabindex="0" role="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 10-16 0"/></svg>Passengers
   </div>
-  <div class="nav" data-s="flights">
+  <div class="nav" data-s="flights" tabindex="0" role="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5c-1.5-1.5-3.5-1.5-5 0L11 6 2.8 6.2c-.5.1-.9.4-1.1.8l-1 1.6c-.2.4-.2.8.1 1.1l4.4 4.4-1.4 3.5-2.2.8c-.3.1-.5.4-.5.7v1.6c0 .5.5.9 1 .8l3.5-.6 1.6 3.2c.2.4.6.6 1 .5l1.6-.4c.4-.1.7-.4.8-.8l.8-3.5 4.4 4.4c.3.3.7.3 1.1.1l1.6-1c.4-.2.7-.6.8-1.1z"/></svg>Flights
   </div>
-  <div class="nav" data-s="bookings">
+  <div class="nav" data-s="bookings" tabindex="0" role="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>All Bookings
   </div>
-  <div class="nav" data-s="reports">
+  <div class="nav" data-s="reports" tabindex="0" role="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports
   </div>
 
@@ -373,13 +373,20 @@ function goToApp() { window.location.href = '/'; }
 
 // ── Navigation ─────────────────────────────────────────
 document.querySelectorAll('.nav').forEach(n => {
-  n.addEventListener('click', () => {
+  const activateNav = () => {
     const s = n.dataset.s;
     document.querySelectorAll('.nav').forEach(x => x.classList.remove('active'));
     document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
     n.classList.add('active');
     document.getElementById('s-' + s).classList.add('active');
     loadSection(s);
+  };
+  n.addEventListener('click', activateNav);
+  n.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      activateNav();
+    }
   });
 });
 
