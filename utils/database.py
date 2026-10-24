@@ -96,9 +96,9 @@ CREATE TABLE IF NOT EXISTS seats (
 
 CREATE TABLE IF NOT EXISTS bookings (
     id              TEXT PRIMARY KEY,
-    passenger_id    TEXT NOT NULL REFERENCES passengers(id),
-    flight_id       TEXT NOT NULL REFERENCES flights(id),
-    seat_id         TEXT NOT NULL REFERENCES seats(id),
+    passenger_id    TEXT NOT NULL REFERENCES passengers(id) ON DELETE CASCADE,
+    flight_id       TEXT NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+    seat_id         TEXT NOT NULL REFERENCES seats(id) ON DELETE CASCADE,
     seat_label      TEXT NOT NULL,
     seat_class      TEXT NOT NULL,
     price           INTEGER NOT NULL,
