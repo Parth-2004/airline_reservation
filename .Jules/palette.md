@@ -1,3 +1,6 @@
 ## 2026-10-22 - Added keyboard accessibility to sidebar navigation
 **Learning:** The `.nav` items in the sidebar act as custom interactive elements (buttons) but lacked keyboard support. Implementing `tabindex="0"`, `role="button"`, `:focus-visible` styling, and `keydown` handlers for Enter/Space keys ensures keyboard accessibility without disrupting visual styling or relying on default HTML buttons.
 **Action:** Apply this pattern (`tabindex`, `role`, `:focus-visible`, `keydown`) to any custom `div` or `span` acting as a button or interactive element.
+## 2024-10-29 - Missing Focus Rings on Interactive Elements
+**Learning:** The AirBook design system explicitly removes default browser outlines (`outline: none`) on `.btn` and `.tab` classes, but failed to provide custom focus rings. This creates a severe accessibility issue where keyboard users cannot see which interactive element currently has focus. The design system uses a custom blue accent color (`var(--accent)`).
+**Action:** When working with elements that have `outline: none` in this codebase, always ensure a corresponding `:focus-visible` state is added. The standard pattern for this app is `outline: 2px solid var(--accent); outline-offset: 2px;` (or negative offset for contained elements like tabs).

@@ -108,6 +108,7 @@ body{font-family:var(--B);background:var(--bg);color:var(--text);min-height:100v
 
 /* ── Buttons ── */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:8px;font-family:var(--F);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px;cursor:pointer;border:none;outline:none;transition:all .2s;position:relative;overflow:hidden}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn:active{transform:scale(.97)}
 .btn-p{background:linear-gradient(135deg,var(--accent),var(--accent-d));color:#fff;box-shadow:0 0 18px rgba(59,130,246,.3)}
 .btn-p:hover{box-shadow:0 0 28px rgba(59,130,246,.5)}
