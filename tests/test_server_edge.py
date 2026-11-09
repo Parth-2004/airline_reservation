@@ -43,3 +43,21 @@ def test_static_routes(client):
 
     res = client.get("/admin")
     assert res.status_code == 200
+
+def test_api_json_errors(client):
+    res = client.get("/api/nonexistent")
+    assert res.status_code == 404
+    assert res.is_json
+
+    res = client.post("/api/flights", json={})
+    assert res.status_code == 405
+    assert res.is_json
+
+    res = client.post("/api/auth/login", data="invalid json", headers={"Content-Type": "application/json"})
+    assert res.status_code == 400
+    assert res.is_json
+
+def test_cors_preflight_undefined_route(client):
+    res = client.options("/api/nonexistent")
+    assert res.status_code == 200
+    assert res.is_json

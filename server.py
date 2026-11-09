@@ -7,6 +7,7 @@ import os, sys, json, functools
 sys.path.insert(0, os.path.dirname(__file__))
 
 from flask import Flask, request, jsonify, send_from_directory, session
+from werkzeug.exceptions import HTTPException
 from utils.database import (
     init_db, get_conn,
     register_user, login_user, get_all_users, get_passenger_by_user,
@@ -30,10 +31,13 @@ def add_cors(response):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     return response
 
-@app.route("/<path:p>", methods=["OPTIONS"])
-@app.route("/", methods=["OPTIONS"])
-def options_handler(*args, **kwargs):
-    return jsonify({}), 200
+@app.errorhandler(HTTPException)
+def handle_http_exception(e):
+    if e.code == 404 and request.method == "OPTIONS":
+        return jsonify({}), 200
+    if request.path.startswith('/api/'):
+        return err(e.description, e.code)
+    return e
 
 # ─── Auth helpers ─────────────────────────────────────────────────────────────
 
