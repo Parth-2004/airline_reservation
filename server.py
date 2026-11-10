@@ -33,10 +33,12 @@ def add_cors(response):
 
 @app.errorhandler(HTTPException)
 def handle_http_exception(e):
-    if e.code == 404 and request.method == "OPTIONS":
+    code = getattr(e, 'code', 500)
+    description = getattr(e, 'description', str(e))
+    if code == 404 and request.method == "OPTIONS":
         return jsonify({}), 200
-    if request.path.startswith('/api/'):
-        return err(e.description, e.code)
+    if request.path.startswith('/api'):
+        return err(description, code)
     return e
 
 # ─── Auth helpers ─────────────────────────────────────────────────────────────
@@ -443,7 +445,7 @@ def api_remove_waitlist(wid):
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
+def main():
     init_db()
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "1") == "1"
@@ -453,3 +455,6 @@ if __name__ == "__main__":
     print(f"  Login    : http://localhost:{port}/login")
     print(f"  API Base : http://localhost:{port}/api\n")
     app.run(debug=debug, host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    main()

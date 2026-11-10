@@ -338,8 +338,11 @@ def test_api_book_missing_passenger_id_as_admin(client):
     assert res.status_code == 400
 
 def test_server_main():
-    import server
-    pass
+    from server import main, init_db
+    from unittest.mock import patch
+    with patch('server.app.run') as mock_run:
+        main()
+        mock_run.assert_called_once()
 
 def test_api_book_non_dict_json(client):
     from utils.database import get_conn, register_user

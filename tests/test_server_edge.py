@@ -57,6 +57,11 @@ def test_api_json_errors(client):
     assert res.status_code == 400
     assert res.is_json
 
+def test_api_other_http_error(client):
+    res = client.post("/api/flights") # Method Not Allowed
+    assert res.status_code == 405
+    assert res.is_json
+
 def test_cors_preflight_undefined_route(client):
     res = client.options("/api/nonexistent")
     assert res.status_code == 200
